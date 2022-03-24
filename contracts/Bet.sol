@@ -1,0 +1,150 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.7;
+
+// KeeperCompatible.sol imports the functions from both ./KeeperBase.sol and
+// ./interfaces/KeeperCompatibleInterface.sol
+import '@chainlink/contracts/src/v0.8/KeeperCompatible.sol';
+import '@openzeppelin/contracts/utils/Counters.sol';
+import { RandomnessInterface } from './interfaces/RandomnessInterface.sol';
+import { GovernanceInterface } from './interfaces/GovernanceInterface.sol';
+
+contract Bet is KeeperCompatibleInterface {
+    event GainsClaimed(address indexed _address, uint256 _value);
+
+    using Counters for Counters.Counter;
+    Counters.Counter private betIdCounter;
+
+    enum BET_STATE {
+        OPEN,
+        CLOSED,
+        CALCULATING_WINNER
+    }
+    BET_STATE public betState;
+    mapping(address => uint256) public players;
+    struct Player {
+        uint256 amountBet;
+        uint16 teamSelected;
+    }
+
+    // Address of the player and => the user info
+    mapping(address => Player) public playerInfo;
+    uint256 public betId;
+    // minimum bet is .01 ETH
+    uint256 public MINIMUM_BET = 1000000000000000;
+
+    uint256 public totalBetTeamOne;
+    uint256 public totalBetTeamTwo;
+
+    address[] public playersBetTeamOne;
+    address[] public playersBetTeamTwo;
+
+    mapping(address => uint256) public claimed;
+
+    uint256 public immutable interval;
+    uint256 public lastTimeStamp;
+    uint256 public expiredTimeStamp;
+    GovernanceInterface public governanceInterface;
+
+    constructor(uint256 upkeepInterval, address governanceInterfaceAddress) {
+        interval = upkeepInterval;
+        governanceInterface = GovernanceInterface(governanceInterfaceAddress);
+
+        betId = betIdCounter.current();
+        betState = BET_STATE.CLOSE;
+        lastTimeStamp = block.timestamp;
+        expiredTimeStamp = block.timestamp;
+    }
+
+    /// Initialise a new bet session
+    /// @param duration in seconds for a new session bet
+    function initNewBet(uint256 duration) public {
+        require(betState == BET_STATE.CLOSED, 'Cannot init a new bet');
+        betIdCounter.increment();
+        betId = betIdCounter.current();
+
+        betState = BET_STATE.OPEN;
+        expiredTimeStamp = block.timestamp + duration;
+    }
+
+    /// enter the bet
+    /// @param team 1 or 2
+    function enter(uint8 team) public payable {
+        require(team == 1 || team == 2, 'Invalid team');
+        require(!checkPlayer(msg.sender), 'Player already placed a bet');
+        require(msg.value >= MINIMUM_BET, 'Bet amount not sufficient');
+        require(betState == BET_STATE.OPEN, 'Incorrect bet state');
+
+        if (team == 1) {
+            playersBetTeamOne.push(msg.sender);
+            totalBetTeamOne += msg.value;
+        } else {
+            playersBetTeamTwo.push(msg.sender);
+            totalBetTeamTwo += msg.value;
+        }
+        players[msg.sender] = msg.value;
+    }
+
+    function claim(bytes32[] memory proof) public {
+        require(merkleRoot != 0, 'No winner yet for this bet');
+        require(
+            proof.verify(merkleRoot, keccak256(abi.encodePacked(msg.sender))),
+            'You are not in the list'
+        );
+
+        uint256 senderBet = players[msg.sender];
+
+        uint256 totalWinners = totalBetTeamOne;
+        uint256 totalLosers = totalBetTeamTwo;
+
+        if (winner == 2) {
+            totalWinners = totalBetTeamTwo;
+            totalLosers = totalBetTeamOne;
+        }
+
+        uint256 total = senderBet + ((senderBet / totalWinners) * totalLosers);
+
+        (bool success, ) = msg.sender.call{ value: total }('');
+
+        require(success, 'Transfer failed.');
+
+        emit GainsClaimed(msg.sender, total);
+    }
+
+    function pickWinner() private {
+        require(betState == BET_STATE.CALCULATING_WINNER, 'Not in the state');
+
+        // randomness_interface(governance.randomness()).getRandom(
+        //   lotteryId,
+        //   lotteryId
+        // );
+        //this kicks off the request and returns through fulfill_random
+    }
+
+    function checkPlayer(address playerAddress) public view returns (bool) {
+        return !(players[playerAddress] == 0);
+    }
+
+    // KeeperCompatible functions
+
+    function checkUpkeep(bytes calldata checkData)
+        external
+        view
+        override
+        returns (bool upkeepNeeded, bytes memory performData)
+    {
+        upkeepNeeded = (block.timestamp - lastTimeStamp) > interval;
+        // We don't use the checkData in this example. The checkData is defined when the Upkeep was registered.
+        performData = checkData;
+    }
+
+    function performUpkeep(bytes calldata performData) external override {
+        //We highly recommend revalidating the upkeep in the performUpkeep function
+        if ((block.timestamp - lastTimeStamp) > interval) {
+            lastTimeStamp = block.timestamp;
+        }
+        if (lastTimeStamp > expiredTimeStamp) {
+            betState = BET_STATE.CLOSED;
+        }
+        // We don't use the performData in this example. The performData is generated by the Keeper's call to your checkUpkeep function
+    }
+}
