@@ -33,6 +33,13 @@ const config: HardhatUserConfig = {
                     ? [process.env.PRIVATE_KEY]
                     : [],
         },
+        bnb: {
+            url: process.env.BNB_URL || '',
+            accounts:
+                process.env.PRIVATE_KEY !== undefined
+                    ? [process.env.PRIVATE_KEY]
+                    : [],
+        },
     },
     gasReporter: {
         enabled: process.env.REPORT_GAS !== undefined,

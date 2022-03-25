@@ -4,15 +4,16 @@ pragma solidity ^0.8.7;
 // KeeperCompatible.sol imports the functions from both ./KeeperBase.sol and
 // ./interfaces/KeeperCompatibleInterface.sol
 import '@chainlink/contracts/src/v0.8/KeeperCompatible.sol';
-import '@openzeppelin/contracts/utils/Counters.sol';
-import { RandomnessInterface } from './interfaces/RandomnessInterface.sol';
+import { MerkleProof } from '@openzeppelin/contracts/utils/cryptography/MerkleProof.sol';
+import { RandomTeamSelectorInterface } from './interfaces/RandomTeamSelectorInterface.sol';
 import { GovernanceInterface } from './interfaces/GovernanceInterface.sol';
 
 contract Bet is KeeperCompatibleInterface {
     event GainsClaimed(address indexed _address, uint256 _value);
-
-    using Counters for Counters.Counter;
-    Counters.Counter private betIdCounter;
+    /**
+     * Public counter variable
+     */
+    uint256 public counter;
 
     enum BET_STATE {
         OPEN,
@@ -21,13 +22,6 @@ contract Bet is KeeperCompatibleInterface {
     }
     BET_STATE public betState;
     mapping(address => uint256) public players;
-    struct Player {
-        uint256 amountBet;
-        uint16 teamSelected;
-    }
-
-    // Address of the player and => the user info
-    mapping(address => Player) public playerInfo;
     uint256 public betId;
     // minimum bet is .01 ETH
     uint256 public MINIMUM_BET = 1000000000000000;
@@ -43,14 +37,17 @@ contract Bet is KeeperCompatibleInterface {
     uint256 public immutable interval;
     uint256 public lastTimeStamp;
     uint256 public expiredTimeStamp;
-    GovernanceInterface public governanceInterface;
+    GovernanceInterface public govInterface;
 
-    constructor(uint256 upkeepInterval, address governanceInterfaceAddress) {
+    using MerkleProof for bytes32[];
+    bytes32 merkleRoot;
+    uint256 public winner;
+
+    constructor(uint256 upkeepInterval, address govInterfaceAddress) {
         interval = upkeepInterval;
-        governanceInterface = GovernanceInterface(governanceInterfaceAddress);
+        govInterface = GovernanceInterface(govInterfaceAddress);
 
-        betId = betIdCounter.current();
-        betState = BET_STATE.CLOSE;
+        betState = BET_STATE.CLOSED;
         lastTimeStamp = block.timestamp;
         expiredTimeStamp = block.timestamp;
     }
@@ -58,15 +55,12 @@ contract Bet is KeeperCompatibleInterface {
     /// Initialise a new bet session
     /// @param duration in seconds for a new session bet
     function initNewBet(uint256 duration) public {
-        require(betState == BET_STATE.CLOSED, 'Cannot init a new bet');
-        betIdCounter.increment();
-        betId = betIdCounter.current();
-
-        betState = BET_STATE.OPEN;
+        // require(betState == BET_STATE.CLOSED, 'Cannot init a new bet');
+        // betState = BET_STATE.OPEN;
         expiredTimeStamp = block.timestamp + duration;
     }
 
-    /// enter the bet
+    /// enter the bet by selecting team 1 or team 2
     /// @param team 1 or 2
     function enter(uint8 team) public payable {
         require(team == 1 || team == 2, 'Invalid team');
@@ -92,7 +86,6 @@ contract Bet is KeeperCompatibleInterface {
         );
 
         uint256 senderBet = players[msg.sender];
-
         uint256 totalWinners = totalBetTeamOne;
         uint256 totalLosers = totalBetTeamTwo;
 
@@ -107,44 +100,72 @@ contract Bet is KeeperCompatibleInterface {
 
         require(success, 'Transfer failed.');
 
+        // clean up
+        delete players[msg.sender];
+
         emit GainsClaimed(msg.sender, total);
-    }
-
-    function pickWinner() private {
-        require(betState == BET_STATE.CALCULATING_WINNER, 'Not in the state');
-
-        // randomness_interface(governance.randomness()).getRandom(
-        //   lotteryId,
-        //   lotteryId
-        // );
-        //this kicks off the request and returns through fulfill_random
     }
 
     function checkPlayer(address playerAddress) public view returns (bool) {
         return !(players[playerAddress] == 0);
     }
 
-    // KeeperCompatible functions
+    function pickWinningTeam() private {
+        // require(betState == BET_STATE.CALCULATING_WINNER, 'Not in the state');
+        RandomTeamSelectorInterface(govInterface.randomTeamSelector())
+            .requestWinningTeam();
+        //this kicks off the VRF request and returns through setWinningTeam
+        counter = counter + 1;
+        // betState = BET_STATE.CLOSED;
+    }
 
-    function checkUpkeep(bytes calldata checkData)
+    // Time KeeperCompatible functions
+
+    function checkUpkeep(
+        bytes calldata /* checkData */
+    )
         external
         view
         override
-        returns (bool upkeepNeeded, bytes memory performData)
+        returns (
+            bool upkeepNeeded,
+            bytes memory /* performData */
+        )
     {
         upkeepNeeded = (block.timestamp - lastTimeStamp) > interval;
-        // We don't use the checkData in this example. The checkData is defined when the Upkeep was registered.
-        performData = checkData;
     }
 
-    function performUpkeep(bytes calldata performData) external override {
+    function performUpkeep(
+        bytes calldata /* performData */
+    ) external override {
         //We highly recommend revalidating the upkeep in the performUpkeep function
         if ((block.timestamp - lastTimeStamp) > interval) {
             lastTimeStamp = block.timestamp;
         }
         if (lastTimeStamp > expiredTimeStamp) {
-            betState = BET_STATE.CLOSED;
+            // betState = BET_STATE.CALCULATING_WINNER;
+            pickWinningTeam();
         }
-        // We don't use the performData in this example. The performData is generated by the Keeper's call to your checkUpkeep function
+    }
+
+    // RandomTeamSelector will call setWinningTeam via its VRF fulfillRandomWords
+
+    function setWinningTeam(uint256 winningTeam) external {
+        // require(
+        //     betState == BET_STATE.CALCULATING_WINNER,
+        //     'State condition is not met'
+        // );
+
+        winner = winningTeam;
+
+        // uint256 index = randomness % players.length;
+        // players[index].transfer(address(this).balance);
+
+        // betState = BET_STATE.CLOSED;
+
+        // You could have this run forever
+        // start_new_lottery();
+        // or with a cron job from a chainlink node would allow you to
+        // keep calling "start_new_lottery" as well
     }
 }

@@ -1,5 +1,6 @@
-pragma solidity 0.8.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.7;
 
 interface BetInterface {
-    function fulfillRandom(uint256) external;
+    function setWinningTeam(uint256) external;
 }
