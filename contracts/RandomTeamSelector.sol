@@ -8,9 +8,6 @@ import { BetInterface } from './interfaces/BetInterface.sol';
 import { GovernanceInterface } from './interfaces/GovernanceInterface.sol';
 
 contract RandomTeamSelector is VRFConsumerBaseV2 {
-    VRFCoordinatorV2Interface COORDINATOR;
-    LinkTokenInterface LINKTOKEN;
-
     // Your subscription ID.
     uint64 s_subscriptionId;
 
@@ -18,13 +15,16 @@ contract RandomTeamSelector is VRFConsumerBaseV2 {
     // see https://docs.chain.link/docs/vrf-contracts/#configurations
     // address vrfCoordinator = 0x6168499c0cFfCaCD319c818142124B7A15E857ab;
     // BNB Testnet
-    address vrfCoordinator = 0x6A2AAd07396B36Fe02a22b33cf443582f682c82f;
+    // address vrfCoordinator = 0x6A2AAd07396B36Fe02a22b33cf443582f682c82f;
 
     // Rinkeby LINK token contract. For other networks,
     // see https://docs.chain.link/docs/vrf-contracts/#configurations
     // address link = 0x01BE23585060835E02B77ef475b0Cc51aA1e0709;
     // BNB Testnet
-    address link = 0x84b9B910527Ad5C03A9Ca831909E21e236EA7b06;
+    // address link = 0x84b9B910527Ad5C03A9Ca831909E21e236EA7b06;
+
+    VRFCoordinatorV2Interface internal COORDINATOR;
+    LinkTokenInterface internal LINKTOKEN;
 
     // The gas lane to use, which specifies the maximum gas price to bump to.
     // For a list of available gas lanes on each network,
@@ -57,9 +57,12 @@ contract RandomTeamSelector is VRFConsumerBaseV2 {
 
     GovernanceInterface public govInterface;
 
-    constructor(uint64 subscriptionId, address govInterfaceAddr)
-        VRFConsumerBaseV2(vrfCoordinator)
-    {
+    constructor(
+        address vrfCoordinator,
+        address link,
+        uint64 subscriptionId,
+        address govInterfaceAddr
+    ) VRFConsumerBaseV2(vrfCoordinator) {
         COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
         LINKTOKEN = LinkTokenInterface(link);
         s_owner = msg.sender;

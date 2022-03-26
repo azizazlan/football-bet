@@ -12,6 +12,8 @@ task('deploy', 'Deploy Bet smart contract').setAction(async (taskArgs, hre) => {
     console.log(`Governance deployed at ${governance.address}`);
 
     // RandomTeamSelector
+    const vrfCoordinatorContractAddr = `${process.env.CHAINLINK_VRF_COORDINATOR_ADDR}`;
+    const linkAddr = `${process.env.CHAINLINK_LINK_ADDR}`;
     const subscriptionId = `${process.env.CHAINLINK_VRF_SID}`;
     console.log(
         `\nDeploying VRFConsumerV2 contract that uses Subscription Id ${subscriptionId} ...`,
@@ -20,6 +22,8 @@ task('deploy', 'Deploy Bet smart contract').setAction(async (taskArgs, hre) => {
         'RandomTeamSelector',
     );
     const rts = await RandomTeamSelectorFactory.deploy(
+        vrfCoordinatorContractAddr,
+        linkAddr,
         subscriptionId,
         governance.address,
     );

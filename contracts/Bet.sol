@@ -143,7 +143,7 @@ contract Bet is KeeperCompatibleInterface {
 
         claimExpiredTimeStamp = block.timestamp + interval + interval;
 
-        emit WinnerAnnounced(winningTeam, bid);
+        emit WinnerAnnounced(winningTeam, bId);
     }
 
     // Time KeeperCompatible functions
