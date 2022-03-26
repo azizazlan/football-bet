@@ -2,5 +2,5 @@
 pragma solidity 0.8.7;
 
 interface BetInterface {
-    function setWinningTeam(uint256) external;
+    function setWinningTeam(uint256, uint256) external;
 }

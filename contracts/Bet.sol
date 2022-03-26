@@ -4,25 +4,32 @@ pragma solidity ^0.8.7;
 // KeeperCompatible.sol imports the functions from both ./KeeperBase.sol and
 // ./interfaces/KeeperCompatibleInterface.sol
 import '@chainlink/contracts/src/v0.8/KeeperCompatible.sol';
-import { MerkleProof } from '@openzeppelin/contracts/utils/cryptography/MerkleProof.sol';
+import '@openzeppelin/contracts/utils/Counters.sol';
 import { RandomTeamSelectorInterface } from './interfaces/RandomTeamSelectorInterface.sol';
 import { GovernanceInterface } from './interfaces/GovernanceInterface.sol';
 
 contract Bet is KeeperCompatibleInterface {
-    event GainsClaimed(address indexed _address, uint256 _value);
-    /**
-     * Public counter variable
-     */
-    uint256 public counter;
+    event GainsClaimed(address indexed claimant, uint256 value);
+    event BetStaked(address indexed player, uint256 value, uint256 team);
+    event WinnerAnnounced(uint256 team, uint256 betId);
+
+    using Counters for Counters.Counter;
+    Counters.Counter private betIdCounter;
+    uint256 public betId;
+    uint256 public s_requestId;
 
     enum BET_STATE {
         OPEN,
         CLOSED,
-        CALCULATING_WINNER
+        PICKING_TEAM,
+        CLAIM
     }
     BET_STATE public betState;
+
+    mapping(uint256 => uint256) public requestIdBetId;
+    mapping(uint256 => uint256) public betIdWinningTeam;
+
     mapping(address => uint256) public players;
-    uint256 public betId;
     // minimum bet is .01 ETH
     uint256 public MINIMUM_BET = 1000000000000000;
 
@@ -32,16 +39,12 @@ contract Bet is KeeperCompatibleInterface {
     address[] public playersBetTeamOne;
     address[] public playersBetTeamTwo;
 
-    mapping(address => uint256) public claimed;
-
     uint256 public immutable interval;
     uint256 public lastTimeStamp;
     uint256 public expiredTimeStamp;
-    GovernanceInterface public govInterface;
+    uint256 public claimExpiredTimeStamp;
 
-    using MerkleProof for bytes32[];
-    bytes32 merkleRoot;
-    uint256 public winner;
+    GovernanceInterface public govInterface;
 
     constructor(uint256 upkeepInterval, address govInterfaceAddress) {
         interval = upkeepInterval;
@@ -50,22 +53,29 @@ contract Bet is KeeperCompatibleInterface {
         betState = BET_STATE.CLOSED;
         lastTimeStamp = block.timestamp;
         expiredTimeStamp = block.timestamp;
+        claimExpiredTimeStamp = block.timestamp;
+
+        betId = betIdCounter.current();
+        betIdCounter.increment();
     }
 
     /// Initialise a new bet session
-    /// @param duration in seconds for a new session bet
+    /// @param duration in seconds for a new betting and claiming sessions
     function initNewBet(uint256 duration) public {
-        // require(betState == BET_STATE.CLOSED, 'Cannot init a new bet');
-        // betState = BET_STATE.OPEN;
+        require(betState == BET_STATE.CLOSED, 'Incorrect bet state');
+        betState = BET_STATE.OPEN;
         expiredTimeStamp = block.timestamp + duration;
+
+        betId = betIdCounter.current();
+        betIdCounter.increment();
     }
 
-    /// enter the bet by selecting team 1 or team 2
+    /// Wage a bet by selecting team 1 or team 2
     /// @param team 1 or 2
-    function enter(uint8 team) public payable {
+    function bet(uint256 team) public payable {
         require(team == 1 || team == 2, 'Invalid team');
         require(!checkPlayer(msg.sender), 'Player already placed a bet');
-        require(msg.value >= MINIMUM_BET, 'Bet amount not sufficient');
+        require(msg.value >= MINIMUM_BET, 'Insufficient bet amount');
         require(betState == BET_STATE.OPEN, 'Incorrect bet state');
 
         if (team == 1) {
@@ -76,18 +86,19 @@ contract Bet is KeeperCompatibleInterface {
             totalBetTeamTwo += msg.value;
         }
         players[msg.sender] = msg.value;
+
+        emit BetStaked(msg.sender, msg.value, team);
     }
 
-    function claim(bytes32[] memory proof) public {
-        require(merkleRoot != 0, 'No winner yet for this bet');
-        require(
-            proof.verify(merkleRoot, keccak256(abi.encodePacked(msg.sender))),
-            'You are not in the list'
-        );
+    function claim() public {
+        require(checkPlayer(msg.sender), 'Not in the players list');
+        require(betState == BET_STATE.CLAIM, 'Incorrect bet state');
 
         uint256 senderBet = players[msg.sender];
         uint256 totalWinners = totalBetTeamOne;
         uint256 totalLosers = totalBetTeamTwo;
+
+        uint256 winner = betIdWinningTeam[betId];
 
         if (winner == 2) {
             totalWinners = totalBetTeamTwo;
@@ -111,12 +122,28 @@ contract Bet is KeeperCompatibleInterface {
     }
 
     function pickWinningTeam() private {
-        // require(betState == BET_STATE.CALCULATING_WINNER, 'Not in the state');
-        RandomTeamSelectorInterface(govInterface.randomTeamSelector())
-            .requestWinningTeam();
-        //this kicks off the VRF request and returns through setWinningTeam
-        counter = counter + 1;
-        // betState = BET_STATE.CLOSED;
+        require(betState == BET_STATE.PICKING_TEAM, 'Incorrect bet state');
+
+        uint256 requestId = RandomTeamSelectorInterface(
+            govInterface.randomTeamSelector()
+        ).requestWinningTeam();
+
+        s_requestId = requestId;
+
+        requestIdBetId[requestId] = betId;
+    }
+
+    function setWinningTeam(uint256 requestId, uint256 winningTeam) external {
+        require(betState == BET_STATE.PICKING_TEAM, 'Incorrect bet state');
+
+        uint256 bId = requestIdBetId[requestId]; // get bet id
+        betIdWinningTeam[bId] = winningTeam;
+
+        betState = BET_STATE.CLAIM;
+
+        claimExpiredTimeStamp = block.timestamp + interval + interval;
+
+        emit WinnerAnnounced(winningTeam, bid);
     }
 
     // Time KeeperCompatible functions
@@ -142,30 +169,14 @@ contract Bet is KeeperCompatibleInterface {
         if ((block.timestamp - lastTimeStamp) > interval) {
             lastTimeStamp = block.timestamp;
         }
-        if (lastTimeStamp > expiredTimeStamp) {
-            // betState = BET_STATE.CALCULATING_WINNER;
+        if (lastTimeStamp > expiredTimeStamp && betState == BET_STATE.OPEN) {
+            betState = BET_STATE.PICKING_TEAM;
             pickWinningTeam();
         }
-    }
-
-    // RandomTeamSelector will call setWinningTeam via its VRF fulfillRandomWords
-
-    function setWinningTeam(uint256 winningTeam) external {
-        // require(
-        //     betState == BET_STATE.CALCULATING_WINNER,
-        //     'State condition is not met'
-        // );
-
-        winner = winningTeam;
-
-        // uint256 index = randomness % players.length;
-        // players[index].transfer(address(this).balance);
-
-        // betState = BET_STATE.CLOSED;
-
-        // You could have this run forever
-        // start_new_lottery();
-        // or with a cron job from a chainlink node would allow you to
-        // keep calling "start_new_lottery" as well
+        if (
+            lastTimeStamp > claimExpiredTimeStamp && betState == BET_STATE.CLAIM
+        ) {
+            betState = BET_STATE.CLOSED;
+        }
     }
 }

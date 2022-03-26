@@ -2,5 +2,5 @@
 pragma solidity 0.8.7;
 
 interface RandomTeamSelectorInterface {
-    function requestWinningTeam() external;
+    function requestWinningTeam() external returns (uint256);
 }

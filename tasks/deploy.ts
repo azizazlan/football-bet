@@ -23,7 +23,7 @@ task('deploy', 'Deploy Bet smart contract').setAction(async (taskArgs, hre) => {
         subscriptionId,
         governance.address,
     );
-    console.log(`RandomTeamSelector is deployed at ${rts.address}`);
+    console.log(`Consumer RandomTeamSelector deployed at ${rts.address}`);
     console.log(
         'Note: To add the consumer address at https://vrf.chain.link/new',
     );
@@ -38,10 +38,13 @@ task('deploy', 'Deploy Bet smart contract').setAction(async (taskArgs, hre) => {
         upkeepInterval,
         governance.address,
     );
-    console.log(`Bet is deployed at ${bet.address}`);
+    console.log(`Upkeep Bet deployed at ${bet.address}`);
     console.log(
         `Register this new Upkeep contract at https://keepers.chain.link/chapel`,
     );
+
+    const tx = await governance.init(bet.address, rts.address);
+    const receipt = await tx.wait();
 });
 
 export default {};

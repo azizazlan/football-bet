@@ -41,7 +41,7 @@ contract RandomTeamSelector is VRFConsumerBaseV2 {
     // this limit based on the network that you select, the size of the request,
     // and the processing of the callback request in the fulfillRandomWords()
     // function.
-    uint32 callbackGasLimit = 100000;
+    uint32 callbackGasLimit = 300000;
 
     // The default is 3, but you can set this higher.
     uint16 requestConfirmations = 3;
@@ -67,8 +67,9 @@ contract RandomTeamSelector is VRFConsumerBaseV2 {
         govInterface = GovernanceInterface(govInterfaceAddr);
     }
 
-    function requestWinningTeam() external {
+    function requestWinningTeam() external returns (uint256) {
         requestRandomWords();
+        return s_requestId;
     }
 
     // Assumes the subscription is funded sufficiently.
@@ -90,7 +91,7 @@ contract RandomTeamSelector is VRFConsumerBaseV2 {
         s_requestId = requestId;
         s_randomWords = randomWords;
         uint256 winningTeam = (randomWords[0] % 2) + 1;
-        BetInterface(govInterface.bet()).setWinningTeam(winningTeam);
+        BetInterface(govInterface.bet()).setWinningTeam(requestId, winningTeam);
     }
 
     modifier onlyOwner() {
