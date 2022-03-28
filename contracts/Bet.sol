@@ -16,7 +16,6 @@ contract Bet is KeeperCompatibleInterface {
     using Counters for Counters.Counter;
     Counters.Counter private betIdCounter;
     uint256 public betId;
-    uint256 public s_requestId;
 
     enum BET_STATE {
         OPEN,
@@ -34,7 +33,6 @@ contract Bet is KeeperCompatibleInterface {
         uint256 amountBet;
         uint256 teamSelected;
     }
-    // Address of the player and => the user info
     mapping(address => Player) public players;
 
     // minimum bet is .00015 ETH
@@ -42,9 +40,6 @@ contract Bet is KeeperCompatibleInterface {
 
     uint256 public totalBetTeamOne;
     uint256 public totalBetTeamTwo;
-
-    address[] public playersBetTeamOne;
-    address[] public playersBetTeamTwo;
 
     uint256 public immutable interval;
     uint256 public lastTimeStamp;
@@ -86,10 +81,8 @@ contract Bet is KeeperCompatibleInterface {
         require(betState == BET_STATE.OPEN, "Incorrect bet state");
 
         if (team == 1) {
-            playersBetTeamOne.push(msg.sender);
             totalBetTeamOne += msg.value;
         } else {
-            playersBetTeamTwo.push(msg.sender);
             totalBetTeamTwo += msg.value;
         }
         players[msg.sender].isBetting = true;
@@ -139,8 +132,6 @@ contract Bet is KeeperCompatibleInterface {
             govInterface.randomTeamSelector()
         ).requestWinningTeam();
 
-        s_requestId = requestId;
-
         requestIdBetId[requestId] = betId;
     }
 
@@ -152,6 +143,7 @@ contract Bet is KeeperCompatibleInterface {
 
         betState = BET_STATE.CLAIM;
 
+        // claimng session's duration is twice longer than betting session
         claimExpiredTimeStamp = block.timestamp + interval + interval;
 
         emit WinnerAnnounced(winningTeam, bId);
@@ -188,6 +180,9 @@ contract Bet is KeeperCompatibleInterface {
             lastTimeStamp > claimExpiredTimeStamp && betState == BET_STATE.CLAIM
         ) {
             betState = BET_STATE.CLOSED;
+            // clean up
+            totalBetTeamOne = 0;
+            totalBetTeamTwo = 0;
         }
     }
 }
