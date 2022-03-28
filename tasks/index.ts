@@ -1,2 +1,6 @@
 export * from './deploy';
-export * from './init-new-bet';
+export * from './start-new-bet';
+export * from './bet-state';
+export * from './winning-team';
+export * from './bet';
+export * from './claim';
