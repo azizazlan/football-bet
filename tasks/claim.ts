@@ -9,7 +9,7 @@ task('claim', 'Claim the reward').setAction(async (taskArgs, hre) => {
   }
 
   const { ethers } = hre;
-  const contract = `${process.env.BET_CONTRACT_ADDR}`;
+  const contract = `${process.env.VITE_BET_CONTRACT_ADDR}`;
 
   const bet = (await ethers.getContractFactory('Bet')).attach(contract);
 

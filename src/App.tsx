@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import MetaMaskOnboarding from '@metamask/onboarding';
-import Metamaskonboard from './metamaskonboard';
+import Metamaskonboard from './features/metamaskonboard/index';
+import Betting from './features/betting/Betting';
 
 const Header = () => {
   return (
@@ -25,7 +25,7 @@ function App() {
   return (
     <div>
       <Header />
-      Betting area...
+      <Betting />
     </div>
   );
 }

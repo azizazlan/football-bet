@@ -13,7 +13,7 @@ task('bet', 'Bet')
     }
 
     const { ethers } = hre;
-    const contract = `${process.env.BET_CONTRACT_ADDR}`;
+    const contract = `${process.env.VITE_BET_CONTRACT_ADDR}`;
 
     const accounts = await ethers.getSigners();
 
