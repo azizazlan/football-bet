@@ -1,6 +1,9 @@
+import { Web3Provider } from '@ethersproject/providers';
+import { Web3ReactProvider } from '@web3-react/core';
 import MetaMaskOnboarding from '@metamask/onboarding';
 import Metamaskonboard from './features/metamaskonboard/index';
 import Betting from './features/betting/Betting';
+import { BettingContextProvider } from './contexts/Betting';
 
 const Header = () => {
   return (
@@ -11,6 +14,12 @@ const Header = () => {
     </div>
   );
 };
+
+function getLibrary(provider: any): Web3Provider {
+  const library = new Web3Provider(provider);
+  library.pollingInterval = 12000;
+  return library;
+}
 
 function App() {
   if (!MetaMaskOnboarding.isMetaMaskInstalled()) {
@@ -23,10 +32,12 @@ function App() {
   }
 
   return (
-    <div>
+    <Web3ReactProvider getLibrary={getLibrary}>
       <Header />
-      <Betting />
-    </div>
+      <BettingContextProvider>
+        <Betting />
+      </BettingContextProvider>
+    </Web3ReactProvider>
   );
 }
 
