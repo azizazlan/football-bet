@@ -1,9 +1,10 @@
 import React from 'react';
+import Button from '@mui/material/Button';
 import { Path, useForm, UseFormRegister, SubmitHandler } from 'react-hook-form';
 import { useBettingContext } from '../../contexts/Betting';
 
 interface IFormValues {
-  'Bet Amount In Ether': string;
+  'Bet Amount': string;
   betAmountInEther: number;
   selectedTeam: number;
 }
@@ -50,11 +51,13 @@ export default function EnterForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <Input label="Bet Amount In Ether" register={register} required />
+      <Input label="Bet Amount" register={register} required />
       <br />
       <Select label="Select your team" {...register('selectedTeam')} />
       <br />
-      <input type="submit" />
+      <Button variant="contained" type="submit">
+        submit{' '}
+      </Button>
     </form>
   );
 }

@@ -18,6 +18,7 @@ type Context = {
   enterBet: (val: AtLeastTwoNumbers) => void;
   winningTeam: number;
   getWinningTeam: () => void;
+  win: boolean; // player win or loose
 };
 
 const BettingContext = createContext<Context | null>(null);
@@ -27,6 +28,9 @@ export const BettingContextProvider = ({ children }: Props) => {
   const [contract, setContract] = useState<Contract>();
   const [betState, setBetState] = useState(0);
   const [winningTeam, setWinningTeam] = useState(0);
+  const [ethBalance, setEthBalance] = useState(0);
+  const [selectedTeam, setSelectedTeam] = useState(0);
+  const [win, setWin] = useState(false);
 
   const { ethereum } = window;
   const { chainId, account, activate, active, library } =
@@ -78,21 +82,40 @@ export const BettingContextProvider = ({ children }: Props) => {
       .connect(signer)
       .bet(val.selectedTeam, { value: betAmount });
     const receipt = await tx.wait();
+
+    setSelectedTeam(val.selectedTeam);
+
     console.log(receipt);
   };
 
   const getWinningTeam = async () => {
+    if (!account) return;
     if (!contract) return;
 
-    let i: number = ethers.BigNumber.from(await contract.betId()).toNumber();
+    let team = 0;
+    const betId = ethers.BigNumber.from(await contract.betId()).toNumber();
+    let i: number = betId;
     while (i > 0) {
-      const team = await contract.betIdWinningTeam(ethers.BigNumber.from(i));
+      team = await contract.betIdWinningTeam(ethers.BigNumber.from(i));
+      team = ethers.BigNumber.from( team ).toNumber();
+      if (i === betId) {
+        setWinningTeam(team);
+      }
       console.log(
-        `For bet id ${i} the winning team is Team ${ethers.BigNumber.from(
-          team,
-        ).toNumber()}`,
+        `For bet id ${i} the winning team is Team ${team}`
       );
       i--;
+    }
+
+    const player = await contract.players(account);
+    const playerSelectedTeam = ethers.BigNumber.from(player[1]).toNumber();
+    const playerBetId = ethers.BigNumber.from( player[2] ).toNumber();
+    console.log( `playr bet id ${ playerBetId }` )
+    console.log( `playr selected team ${ playerSelectedTeam }` )
+    if( playerSelectedTeam === team  ){ 
+        setWin( true )
+    }else{ 
+        setWin( false )
     }
   };
 
@@ -106,6 +129,7 @@ export const BettingContextProvider = ({ children }: Props) => {
         enterBet,
         winningTeam,
         getWinningTeam,
+        win,
       }}
     >
       {children}

@@ -1,16 +1,22 @@
+import { Typography } from '@mui/material';
 import { Web3Provider } from '@ethersproject/providers';
 import { Web3ReactProvider } from '@web3-react/core';
 import MetaMaskOnboarding from '@metamask/onboarding';
-import Metamaskonboard from './features/metamaskonboard/index';
-import Betting from './features/betting/Betting';
+import Metamaskonboard from './components/metamaskonboard/index';
+import Betting from './components/betting/Betting';
 import { BettingContextProvider } from './contexts/Betting';
 
 const Header = () => {
   return (
     <div
-      style={{ marginBottom: '7px', display: 'flex', flexDirection: 'column' }}
+      style={{
+        margin: '1em',
+        marginBottom: '7px',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
     >
-      MoneyCome
+      <Typography variant="h3">MoneyCome</Typography>
     </div>
   );
 };
