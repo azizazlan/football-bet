@@ -29,9 +29,9 @@ contract Bet is KeeperCompatibleInterface {
     mapping(uint256 => uint256) public betIdWinningTeam;
 
     struct Player {
-        bool isBetting;
         uint256 amountBet;
         uint256 teamSelected;
+        uint256 betId;
     }
     mapping(address => Player) public players;
 
@@ -76,7 +76,7 @@ contract Bet is KeeperCompatibleInterface {
     /// @param team 1 or 2
     function bet(uint256 team) public payable {
         require(team == 1 || team == 2, "Invalid team");
-        require(!checkPlayer(msg.sender), "Player already placed a bet");
+        require(!hasPlayerPlacedBet(msg.sender), "Player already bet");
         require(msg.value >= MINIMUM_BET, "Insufficient bet amount");
         require(betState == BET_STATE.OPEN, "Incorrect bet state");
 
@@ -85,15 +85,15 @@ contract Bet is KeeperCompatibleInterface {
         } else {
             totalBetTeamTwo += msg.value;
         }
-        players[msg.sender].isBetting = true;
         players[msg.sender].amountBet = msg.value;
         players[msg.sender].teamSelected = team;
+        players[msg.sender].betId = betId;
 
         emit BetStaked(msg.sender, msg.value, team);
     }
 
     function claim() public {
-        require(checkPlayer(msg.sender), "Not in the claim list");
+        require(hasPlayerPlacedBet(msg.sender), "Player has not bet");
         require(betState == BET_STATE.CLAIM, "Incorrect bet state");
 
         uint256 winner = betIdWinningTeam[betId];
@@ -121,8 +121,12 @@ contract Bet is KeeperCompatibleInterface {
         emit GainsClaimed(msg.sender, total);
     }
 
-    function checkPlayer(address playerAddress) public view returns (bool) {
-        return players[playerAddress].isBetting;
+    function hasPlayerPlacedBet(address playerAddress)
+        public
+        view
+        returns (bool)
+    {
+        return players[playerAddress].betId == betId;
     }
 
     function pickWinningTeam() private {

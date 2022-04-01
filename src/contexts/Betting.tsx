@@ -7,11 +7,17 @@ import Bet from '../artifacts/contracts/Bet.sol/Bet.json';
 type Props = {
   children: React.ReactNode;
 };
+
+type AtLeastTwoNumbers = { selectedTeam: number; betAmountInEther: number };
+
 type Context = {
   count: number;
   betState: number;
   getBetState: () => void;
   startNewBet: () => void;
+  enterBet: (val: AtLeastTwoNumbers) => void;
+  winningTeam: number;
+  getWinningTeam: () => void;
 };
 
 const BettingContext = createContext<Context | null>(null);
@@ -20,6 +26,7 @@ export const BettingContextProvider = ({ children }: Props) => {
   const [count, setCount] = useState(0);
   const [contract, setContract] = useState<Contract>();
   const [betState, setBetState] = useState(0);
+  const [winningTeam, setWinningTeam] = useState(0);
 
   const { ethereum } = window;
   const { chainId, account, activate, active, library } =
@@ -43,12 +50,63 @@ export const BettingContextProvider = ({ children }: Props) => {
     const signer = library?.getSigner();
     if (!signer) return;
 
-    await contract?.connect(signer).startNewBet(60);
+    if (!contract) {
+      console.log('No contract instance');
+      return;
+    }
+
+    const tx = await contract.connect(signer).startNewBet(60);
+    const receipt = await tx.wait();
+    console.log(receipt);
+  };
+
+  const enterBet = async (val: AtLeastTwoNumbers) => {
+    const signer = library?.getSigner();
+    if (!signer) {
+      console.log('No signer');
+      return;
+    }
+    if (!contract) {
+      console.log('No contract');
+      return;
+    }
+
+    // Convert Ether to wei
+    const betAmount = ethers.utils.parseEther(val.betAmountInEther.toString());
+
+    const tx = await contract
+      .connect(signer)
+      .bet(val.selectedTeam, { value: betAmount });
+    const receipt = await tx.wait();
+    console.log(receipt);
+  };
+
+  const getWinningTeam = async () => {
+    if (!contract) return;
+
+    let i: number = ethers.BigNumber.from(await contract.betId()).toNumber();
+    while (i > 0) {
+      const team = await contract.betIdWinningTeam(ethers.BigNumber.from(i));
+      console.log(
+        `For bet id ${i} the winning team is Team ${ethers.BigNumber.from(
+          team,
+        ).toNumber()}`,
+      );
+      i--;
+    }
   };
 
   return (
     <BettingContext.Provider
-      value={{ count, betState, getBetState, startNewBet }}
+      value={{
+        count,
+        betState,
+        getBetState,
+        startNewBet,
+        enterBet,
+        winningTeam,
+        getWinningTeam,
+      }}
     >
       {children}
     </BettingContext.Provider>
