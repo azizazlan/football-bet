@@ -4,22 +4,29 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import { useBettingContext } from '../../contexts/Betting';
 
-const Claim = ({ winningTeam, getWinningTeam, win }) => {
+enum TEAM {
+  'Yet to announce' = 0,
+  'Blue Team' = 1,
+  'Red Team' = 2,
+}
+
+const Claim = ({ winningTeam, getWinningTeam, win, claim }) => {
   const { selectedTeam } = useBettingContext();
   return (
     <Paper elevation={3} style={{ padding: '1em' }}>
       <Typography variant="h5">Claim card</Typography>
       <div style={{ marginTop: '1em' }} />
-      Winning team: {winningTeam}
+      Winning : {TEAM[winningTeam]}
       <br />
-      Selected team: {selectedTeam}, therefore I {win ? 'win!' : 'lose :('}
+      Selected: {selectedTeam !== 0 ? TEAM[selectedTeam] : '-'}, therefore I{' '}
+      {win ? 'win!' : 'lose :('}
       <br />
       <Box display="flex" flexDirection="row">
         <Button variant="contained" onClick={getWinningTeam}>
           Who wins?
         </Button>
         <div style={{ minWidth: '0.5em' }} />
-        <Button variant="contained" disabled={!win}>
+        <Button variant="contained" disabled={!win} onClick={claim}>
           claim
         </Button>
       </Box>

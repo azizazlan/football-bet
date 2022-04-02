@@ -9,6 +9,7 @@ import {RandomTeamSelectorInterface} from "./interfaces/RandomTeamSelectorInterf
 import {GovernanceInterface} from "./interfaces/GovernanceInterface.sol";
 
 contract Bet is KeeperCompatibleInterface {
+    event NewBet(uint256 indexed betId);
     event GainsClaimed(address indexed claimant, uint256 value);
     event BetStaked(address indexed player, uint256 value, uint256 team);
     event WinnerAnnounced(uint256 team, uint256 betId);
@@ -70,6 +71,8 @@ contract Bet is KeeperCompatibleInterface {
 
         betId = betIdCounter.current();
         betIdCounter.increment();
+
+        emit NewBet(betId);
     }
 
     /// Wage a bet by selecting team 1 or team 2

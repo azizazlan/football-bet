@@ -11,12 +11,14 @@ const Betting = () => {
   const { account } = useWeb3React<Web3Provider>();
 
   const {
+    pending,
     getBetState,
     betState,
     startNewBet,
     winningTeam,
     getWinningTeam,
     win,
+    claim,
   } = useBettingContext();
 
   return (
@@ -40,6 +42,7 @@ const Betting = () => {
         winningTeam={winningTeam}
         getWinningTeam={getWinningTeam}
         win={win}
+        claim={claim}
       />
     </Box>
   );

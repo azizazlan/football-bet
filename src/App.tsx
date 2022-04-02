@@ -1,10 +1,10 @@
-import { Typography } from '@mui/material';
 import { Web3Provider } from '@ethersproject/providers';
 import { Web3ReactProvider } from '@web3-react/core';
 import MetaMaskOnboarding from '@metamask/onboarding';
 import { OnboardingButton } from './components/metamask';
 import Betting from './components/betting/Betting';
 import { BettingContextProvider } from './contexts/Betting';
+import logo from './assets/imgs/moneycome.png';
 
 const Header = () => {
   return (
@@ -16,7 +16,11 @@ const Header = () => {
         flexDirection: 'column',
       }}
     >
-      <Typography variant="h3">MoneyCome</Typography>
+      <img
+        src={logo}
+        alt="moneycome logo"
+        style={{ width: '195px', height: 'auto' }}
+      />
     </div>
   );
 };

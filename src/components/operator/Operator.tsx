@@ -14,11 +14,11 @@ enum BET_STATE {
 const Operator = ({ betState, getBetState, startNewBet }) => {
   React.useEffect(() => {
     getBetState();
-  }, [getBetState]);
+  }, []);
 
   return (
     <Paper elevation={3} style={{ padding: '1em' }}>
-      <Typography variant="h5">Operator Card</Typography>
+      <Typography variant="h5">Operator</Typography>
       <div style={{ marginTop: '1em' }} />
       <div>Bet state: {BET_STATE[betState]}</div>
       <Box display="flex" flexDirection="row">

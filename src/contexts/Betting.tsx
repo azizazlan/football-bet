@@ -11,6 +11,7 @@ type Props = {
 type AtLeastTwoNumbers = { selectedTeam: number; betAmountInEther: number };
 
 type Context = {
+  pending: boolean;
   betState: number;
   getBetState: () => void;
   startNewBet: () => void;
@@ -25,6 +26,7 @@ type Context = {
 const BettingContext = createContext<Context | null>(null);
 
 export const BettingContextProvider = ({ children }: Props) => {
+  const [pending, setPending] = useState(false);
   const [contract, setContract] = useState<Contract>();
   const [betState, setBetState] = useState(0);
   const [winningTeam, setWinningTeam] = useState(0);
@@ -44,8 +46,10 @@ export const BettingContextProvider = ({ children }: Props) => {
   }, []);
 
   const getBetState = async () => {
+    setPending(true);
     const s = await contract?.betState();
     setBetState(s);
+    setPending(false);
   };
 
   const startNewBet = async () => {
@@ -57,9 +61,18 @@ export const BettingContextProvider = ({ children }: Props) => {
       return;
     }
 
-    const tx = await contract.connect(signer).startNewBet(60);
-    const receipt = await tx.wait();
-    console.log(receipt);
+    setPending(true);
+
+    try {
+      const tx = await contract.connect(signer).startNewBet(60);
+      const receipt = await tx.wait();
+      console.log(receipt);
+
+      setPending(false);
+      getBetState();
+    } catch (err) {
+      setPending(false);
+    }
   };
 
   const enterBet = async (val: AtLeastTwoNumbers) => {
@@ -73,45 +86,43 @@ export const BettingContextProvider = ({ children }: Props) => {
       return;
     }
 
-    // Convert Ether to wei
-    const betAmount = ethers.utils.parseEther(val.betAmountInEther.toString());
+    setPending(true);
 
-    const tx = await contract
-      .connect(signer)
-      .bet(val.selectedTeam, { value: betAmount });
-    const receipt = await tx.wait();
+    try {
+      // Convert Ether to wei
+      const betAmount = ethers.utils.parseEther(
+        val.betAmountInEther.toString(),
+      );
+      const tx = await contract
+        .connect(signer)
+        .bet(val.selectedTeam, { value: betAmount });
+      const receipt = await tx.wait();
 
-    setSelectedTeam(val.selectedTeam);
-
-    console.log(receipt);
+      setSelectedTeam(val.selectedTeam);
+      console.log(receipt);
+      setPending(false);
+    } catch (error) {
+      console.log(error);
+      setPending(false);
+    }
   };
 
   const getWinningTeam = async () => {
     if (!account) return;
     if (!contract) return;
 
-    let team = 0;
-    const betId = ethers.BigNumber.from(await contract.betId()).toNumber();
-    let i: number = betId;
-    while (i > 0) {
-      team = await contract.betIdWinningTeam(ethers.BigNumber.from(i));
-      team = ethers.BigNumber.from(team).toNumber();
-      if (i === betId) {
-        setWinningTeam(team);
-      }
-      console.log(`For bet id ${i} the winning team is Team ${team}`);
-      i--;
-    }
-
     const player = await contract.players(account);
     const playerSelectedTeam = ethers.BigNumber.from(player[1]).toNumber();
     const playerBetId = ethers.BigNumber.from(player[2]).toNumber();
-    console.log(`playr bet id ${playerBetId}`);
-    console.log(`playr selected team ${playerSelectedTeam}`);
-
     setSelectedTeam(playerSelectedTeam);
+    console.log(`Player selectedTeam ${playerSelectedTeam}`);
 
-    if (playerSelectedTeam === team) {
+    const betId = ethers.BigNumber.from(await contract.betId()).toNumber();
+    const lastWinningTeam = await contract.betIdWinningTeam(betId);
+    setWinningTeam(lastWinningTeam.toNumber());
+    console.log(`lastWinningTeam ${lastWinningTeam}`);
+
+    if (playerSelectedTeam === winningTeam) {
       setWin(true);
     } else {
       setWin(false);
@@ -119,13 +130,22 @@ export const BettingContextProvider = ({ children }: Props) => {
   };
 
   const claim = async () => {
-    if (!account) return;
+    const signer = library?.getSigner();
+    if (!signer) {
+      console.log('No signer');
+      return;
+    }
     if (!contract) return;
+
+    const tx = await contract.connect(signer).claim();
+    const receipt = await tx.wait();
+    console.log(receipt);
   };
 
   return (
     <BettingContext.Provider
       value={{
+        pending,
         betState,
         getBetState,
         startNewBet,

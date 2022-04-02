@@ -42,30 +42,28 @@ export default function EnterForm() {
       <div style={{ marginTop: '1em' }} />
       <form onSubmit={handleSubmit(onSubmit)}>
         <Controller
+          defaultValue={0}
           render={({ field }) => (
             <TextField
               fullWidth
-              id="outlined-basic"
-              label="Bet amount"
-              variant="outlined"
+              {...field}
+              label="Amount ETH"
               InputLabelProps={{ shrink: true }}
             />
           )}
           name="betAmountInEther"
           control={control}
-          defaultValue={0}
         />
         <br />
         <Controller
           control={control}
-          defaultValue={{ value: 1, label: '1' }}
           name="selectedTeam"
           render={({ field }) => (
             <Select
               {...field}
               options={[
-                { value: 1, label: '1' },
-                { value: 2, label: '2' },
+                { value: 1, label: 'Blue Team' },
+                { value: 2, label: 'Red Team' },
               ]}
             />
           )}
