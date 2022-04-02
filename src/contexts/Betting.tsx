@@ -104,6 +104,7 @@ export const BettingContextProvider = ({ children }: Props) => {
     } catch (error) {
       console.log(error);
       setPending(false);
+      getBetState();
     }
   };
 

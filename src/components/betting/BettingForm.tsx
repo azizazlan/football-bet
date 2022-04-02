@@ -1,7 +1,10 @@
+import Box from '@mui/material/Box';
+import Alert from '@mui/material/Alert';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import CircularProgress from '@mui/material/CircularProgress';
 import Select from 'react-select';
 import {
   Path,
@@ -24,10 +27,14 @@ type InputProps = {
   required: boolean;
 };
 
-export default function EnterForm() {
-  const { control, handleSubmit } = useForm<IFormInput>();
+export default function BettingForm() {
+  const { control, handleSubmit } = useForm<IFormInput>({
+    defaultValues: {
+      selectedTeam: { value: 1, label: 'BlueTeam' },
+    },
+  });
 
-  const { enterBet } = useBettingContext();
+  const { enterBet, pending } = useBettingContext();
 
   const onSubmit: SubmitHandler<IFormInput> = (data) => {
     enterBet({
@@ -49,6 +56,7 @@ export default function EnterForm() {
               {...field}
               label="Amount ETH"
               InputLabelProps={{ shrink: true }}
+              helperText="Minimum bet is 0.00015 Ether"
             />
           )}
           name="betAmountInEther"
@@ -68,10 +76,13 @@ export default function EnterForm() {
             />
           )}
         />
-        <br />
-        <Button variant="contained" type="submit">
-          submit
-        </Button>
+        <Box my={1} display="flex" flexDirection="row" alignItems="center">
+          <Button variant="contained" type="submit" disabled={pending}>
+            submit
+          </Button>
+          <div style={{ width: '0.5em' }} />
+          {pending ? <CircularProgress size={21} /> : null}
+        </Box>
       </form>
     </Paper>
   );

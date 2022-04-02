@@ -1,3 +1,5 @@
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import { Web3Provider } from '@ethersproject/providers';
 import { Web3ReactProvider } from '@web3-react/core';
 import MetaMaskOnboarding from '@metamask/onboarding';
@@ -8,20 +10,18 @@ import logo from './assets/imgs/moneycome.png';
 
 const Header = () => {
   return (
-    <div
-      style={{
-        margin: '1em',
-        marginBottom: '7px',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      <img
-        src={logo}
-        alt="moneycome logo"
-        style={{ width: '195px', height: 'auto' }}
-      />
-    </div>
+    <Box display="flex" flexDirection="row" style={{ width: '100%' }}>
+      <Box flexGrow={1}>
+        <Typography variant="h4">Win some ethers!</Typography>
+      </Box>
+      <Box>
+        <img
+          src={logo}
+          alt="moneycome logo"
+          style={{ width: '95px', height: 'auto' }}
+        />
+      </Box>
+    </Box>
   );
 };
 
@@ -34,20 +34,22 @@ function getLibrary(provider: any): Web3Provider {
 function App() {
   if (!MetaMaskOnboarding.isMetaMaskInstalled()) {
     return (
-      <div>
+      <Box mx={3} my={3}>
         <Header />
         <OnboardingButton />
-      </div>
+      </Box>
     );
   }
 
   return (
-    <Web3ReactProvider getLibrary={getLibrary}>
-      <Header />
-      <BettingContextProvider>
-        <Betting />
-      </BettingContextProvider>
-    </Web3ReactProvider>
+    <Box mx={3} my={3}>
+      <Web3ReactProvider getLibrary={getLibrary}>
+        <Header />
+        <BettingContextProvider>
+          <Betting />
+        </BettingContextProvider>
+      </Web3ReactProvider>
+    </Box>
   );
 }
 
