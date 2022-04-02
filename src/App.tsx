@@ -2,7 +2,7 @@ import { Typography } from '@mui/material';
 import { Web3Provider } from '@ethersproject/providers';
 import { Web3ReactProvider } from '@web3-react/core';
 import MetaMaskOnboarding from '@metamask/onboarding';
-import Metamaskonboard from './components/metamaskonboard/index';
+import { OnboardingButton } from './components/metamask';
 import Betting from './components/betting/Betting';
 import { BettingContextProvider } from './contexts/Betting';
 
@@ -32,7 +32,7 @@ function App() {
     return (
       <div>
         <Header />
-        <Metamaskonboard />
+        <OnboardingButton />
       </div>
     );
   }

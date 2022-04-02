@@ -1,63 +1,80 @@
-import React from 'react';
+import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
-import { Path, useForm, UseFormRegister, SubmitHandler } from 'react-hook-form';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import Select from 'react-select';
+import {
+  Path,
+  useForm,
+  UseFormRegister,
+  SubmitHandler,
+  Controller,
+} from 'react-hook-form';
 import { useBettingContext } from '../../contexts/Betting';
 
-interface IFormValues {
+interface IFormInput {
   'Bet Amount': string;
   betAmountInEther: number;
-  selectedTeam: number;
+  selectedTeam: { label: string; value: number };
 }
 
 type InputProps = {
-  label: Path<IFormValues>;
-  register: UseFormRegister<IFormValues>;
+  label: Path<IFormInput>;
+  register: UseFormRegister<IFormInput>;
   required: boolean;
 };
 
-const Select = React.forwardRef<
-  HTMLSelectElement,
-  { label: string } & ReturnType<UseFormRegister<IFormValues>>
->(({ onChange, onBlur, name, label }, ref) => (
-  <>
-    <label>{label}</label>
-    <select name={name} ref={ref} onChange={onChange} onBlur={onBlur}>
-      <option value="1">1</option>
-      <option value="2">2</option>
-    </select>
-  </>
-));
-
-const Input = ({ label, register, required }: InputProps) => (
-  <>
-    <label>{label}</label>
-    <input {...register('betAmountInEther', { required })} />
-    ETH
-  </>
-);
-
 export default function EnterForm() {
-  const { register, handleSubmit } = useForm<IFormValues>();
+  const { control, handleSubmit } = useForm<IFormInput>();
+
   const { enterBet } = useBettingContext();
 
-  const onSubmit: SubmitHandler<IFormValues> = (data) => {
-    console.log(JSON.stringify(data));
-
+  const onSubmit: SubmitHandler<IFormInput> = (data) => {
     enterBet({
-      selectedTeam: data.selectedTeam,
+      selectedTeam: data.selectedTeam.value,
       betAmountInEther: data.betAmountInEther,
     });
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <Input label="Bet Amount" register={register} required />
-      <br />
-      <Select label="Select your team" {...register('selectedTeam')} />
-      <br />
-      <Button variant="contained" type="submit">
-        submit{' '}
-      </Button>
-    </form>
+    <Paper elevation={3} style={{ padding: '1em' }}>
+      <Typography variant="h5">Betting card</Typography>
+      <div style={{ marginTop: '1em' }} />
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Controller
+          render={({ field }) => (
+            <TextField
+              fullWidth
+              id="outlined-basic"
+              label="Bet amount"
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+            />
+          )}
+          name="betAmountInEther"
+          control={control}
+          defaultValue={0}
+        />
+        <br />
+        <Controller
+          control={control}
+          defaultValue={{ value: 1, label: '1' }}
+          name="selectedTeam"
+          render={({ field }) => (
+            <Select
+              {...field}
+              options={[
+                { value: 1, label: '1' },
+                { value: 2, label: '2' },
+              ]}
+            />
+          )}
+        />
+        <br />
+        <Button variant="contained" type="submit">
+          submit
+        </Button>
+      </form>
+    </Paper>
   );
 }

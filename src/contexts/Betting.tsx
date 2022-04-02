@@ -11,24 +11,23 @@ type Props = {
 type AtLeastTwoNumbers = { selectedTeam: number; betAmountInEther: number };
 
 type Context = {
-  count: number;
   betState: number;
   getBetState: () => void;
   startNewBet: () => void;
   enterBet: (val: AtLeastTwoNumbers) => void;
+  selectedTeam: number;
   winningTeam: number;
   getWinningTeam: () => void;
   win: boolean; // player win or loose
+  claim: () => void;
 };
 
 const BettingContext = createContext<Context | null>(null);
 
 export const BettingContextProvider = ({ children }: Props) => {
-  const [count, setCount] = useState(0);
   const [contract, setContract] = useState<Contract>();
   const [betState, setBetState] = useState(0);
   const [winningTeam, setWinningTeam] = useState(0);
-  const [ethBalance, setEthBalance] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState(0);
   const [win, setWin] = useState(false);
 
@@ -37,7 +36,6 @@ export const BettingContextProvider = ({ children }: Props) => {
     useWeb3React<Web3Provider>();
 
   useEffect(() => {
-    setCount(666);
     const contractAddress = `${process.env.BET_CONTRACT_ADDR}`;
     const provider = new ethers.providers.Web3Provider(ethereum);
 
@@ -97,39 +95,46 @@ export const BettingContextProvider = ({ children }: Props) => {
     let i: number = betId;
     while (i > 0) {
       team = await contract.betIdWinningTeam(ethers.BigNumber.from(i));
-      team = ethers.BigNumber.from( team ).toNumber();
+      team = ethers.BigNumber.from(team).toNumber();
       if (i === betId) {
         setWinningTeam(team);
       }
-      console.log(
-        `For bet id ${i} the winning team is Team ${team}`
-      );
+      console.log(`For bet id ${i} the winning team is Team ${team}`);
       i--;
     }
 
     const player = await contract.players(account);
     const playerSelectedTeam = ethers.BigNumber.from(player[1]).toNumber();
-    const playerBetId = ethers.BigNumber.from( player[2] ).toNumber();
-    console.log( `playr bet id ${ playerBetId }` )
-    console.log( `playr selected team ${ playerSelectedTeam }` )
-    if( playerSelectedTeam === team  ){ 
-        setWin( true )
-    }else{ 
-        setWin( false )
+    const playerBetId = ethers.BigNumber.from(player[2]).toNumber();
+    console.log(`playr bet id ${playerBetId}`);
+    console.log(`playr selected team ${playerSelectedTeam}`);
+
+    setSelectedTeam(playerSelectedTeam);
+
+    if (playerSelectedTeam === team) {
+      setWin(true);
+    } else {
+      setWin(false);
     }
+  };
+
+  const claim = async () => {
+    if (!account) return;
+    if (!contract) return;
   };
 
   return (
     <BettingContext.Provider
       value={{
-        count,
         betState,
         getBetState,
         startNewBet,
         enterBet,
+        selectedTeam,
         winningTeam,
         getWinningTeam,
         win,
+        claim,
       }}
     >
       {children}
