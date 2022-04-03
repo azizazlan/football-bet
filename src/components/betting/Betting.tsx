@@ -8,6 +8,7 @@ import Operator from '../operator/Operator';
 import Claim from '../claim/Claim';
 import useInterval from './useInterval';
 import { injectedConnector } from '../../contexts/injectedConnector';
+import animate from '../../assets/imgs/giphy.gif';
 
 const Betting = () => {
   const { account, activate } = useWeb3React<Web3Provider>();
@@ -40,9 +41,18 @@ const Betting = () => {
 
   if (betState === 2) {
     return (
-      <Alert severity="info" icon={false}>
-        Randomly selecting wining team...
-      </Alert>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
+        <img src={animate} style={{ width: '150px', height: 'auto' }} />
+        <Alert severity="info" icon={false}>
+          Randomly selecting wining team...
+        </Alert>
+      </div>
     );
   }
 
