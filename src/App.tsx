@@ -1,25 +1,25 @@
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import { Web3Provider } from '@ethersproject/providers';
 import { Web3ReactProvider } from '@web3-react/core';
 import MetaMaskOnboarding from '@metamask/onboarding';
 import { OnboardingButton } from './components/metamask';
 import Betting from './components/betting/Betting';
+import Account from './components/metamask/Account';
 import { BettingContextProvider } from './contexts/Betting';
 import logo from './assets/imgs/moneycome.png';
 
 const Header = () => {
   return (
     <Box display="flex" flexDirection="row" style={{ width: '100%' }}>
-      <Box flexGrow={1}>
-        <Typography variant="h4">Win some ethers!</Typography>
-      </Box>
       <Box>
         <img
           src={logo}
           alt="moneycome logo"
-          style={{ width: '95px', height: 'auto' }}
+          style={{ width: '125px', height: 'auto' }}
         />
+      </Box>
+      <Box mx={3} my={2} flexGrow={1}>
+        <Account />
       </Box>
     </Box>
   );

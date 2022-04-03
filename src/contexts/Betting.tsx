@@ -4,6 +4,8 @@ import { useWeb3React } from '@web3-react/core';
 import { ethers, Contract } from 'ethers';
 import Bet from '../artifacts/contracts/Bet.sol/Bet.json';
 
+const DELAY_INTERVAL = 5000; // 5 seconds
+
 type Props = {
   children: React.ReactNode;
 };
@@ -11,6 +13,7 @@ type Props = {
 type AtLeastTwoNumbers = { selectedTeam: number; betAmountInEther: number };
 
 type Context = {
+  delayInterval: number;
   pending: boolean;
   betState: number;
   getBetState: () => void;
@@ -21,6 +24,7 @@ type Context = {
   getWinningTeam: () => void;
   win: boolean; // player win or loose
   claim: () => void;
+  hasPlayerBet: boolean;
 };
 
 const BettingContext = createContext<Context | null>(null);
@@ -28,10 +32,12 @@ const BettingContext = createContext<Context | null>(null);
 export const BettingContextProvider = ({ children }: Props) => {
   const [pending, setPending] = useState(false);
   const [contract, setContract] = useState<Contract>();
-  const [betState, setBetState] = useState(0);
+  const [betState, setBetState] = useState(1); // CLOSED
   const [winningTeam, setWinningTeam] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState(0);
   const [win, setWin] = useState(false);
+  const [delayInterval, setDelayInterval] = useState(DELAY_INTERVAL);
+  const [hasPlayerBet, setHasPlayerBet] = useState(false);
 
   const { ethereum } = window;
   const { chainId, account, activate, active, library } =
@@ -46,10 +52,22 @@ export const BettingContextProvider = ({ children }: Props) => {
   }, []);
 
   const getBetState = async () => {
-    setPending(true);
-    const s = await contract?.betState();
+    if (!contract) {
+      console.log('No contract');
+      return;
+    }
+    const s = await contract.betState();
     setBetState(s);
-    setPending(false);
+
+    const betId = ethers.BigNumber.from(await contract.betId()).toNumber();
+
+    const player = await contract.players(account);
+    const playerSelectedTeam = ethers.BigNumber.from(player[1]).toNumber();
+    const playerBetId = ethers.BigNumber.from(player[2]).toNumber();
+
+    if (playerBetId === betId) {
+      setHasPlayerBet(true);
+    } else setHasPlayerBet(false);
   };
 
   const startNewBet = async () => {
@@ -61,6 +79,7 @@ export const BettingContextProvider = ({ children }: Props) => {
       return;
     }
 
+    setDelayInterval(3 * DELAY_INTERVAL);
     setPending(true);
 
     try {
@@ -69,9 +88,11 @@ export const BettingContextProvider = ({ children }: Props) => {
       console.log(receipt);
 
       setPending(false);
+      setDelayInterval(DELAY_INTERVAL);
       getBetState();
     } catch (err) {
       setPending(false);
+      setDelayInterval(DELAY_INTERVAL);
     }
   };
 
@@ -87,6 +108,7 @@ export const BettingContextProvider = ({ children }: Props) => {
     }
 
     setPending(true);
+    setDelayInterval(5 * DELAY_INTERVAL);
 
     try {
       // Convert Ether to wei
@@ -99,11 +121,14 @@ export const BettingContextProvider = ({ children }: Props) => {
       const receipt = await tx.wait();
 
       setSelectedTeam(val.selectedTeam);
+      setHasPlayerBet(true);
       console.log(receipt);
       setPending(false);
+      setDelayInterval(DELAY_INTERVAL);
     } catch (error) {
       console.log(error);
       setPending(false);
+      setDelayInterval(DELAY_INTERVAL);
       getBetState();
     }
   };
@@ -138,14 +163,17 @@ export const BettingContextProvider = ({ children }: Props) => {
     }
     if (!contract) return;
 
+    setDelayInterval(5 * DELAY_INTERVAL);
     const tx = await contract.connect(signer).claim();
     const receipt = await tx.wait();
     console.log(receipt);
+    setDelayInterval(DELAY_INTERVAL);
   };
 
   return (
     <BettingContext.Provider
       value={{
+        delayInterval,
         pending,
         betState,
         getBetState,
@@ -156,6 +184,7 @@ export const BettingContextProvider = ({ children }: Props) => {
         getWinningTeam,
         win,
         claim,
+        hasPlayerBet,
       }}
     >
       {children}

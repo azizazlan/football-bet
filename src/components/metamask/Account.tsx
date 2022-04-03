@@ -1,23 +1,10 @@
 import React from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Paper from '@mui/material/Paper';
-import Typography from '@mui/material/Typography';
 import { ethers } from 'ethers';
 import { Web3Provider } from '@ethersproject/providers';
 import { useWeb3React } from '@web3-react/core';
-import { InjectedConnector } from '@web3-react/injected-connector';
-
-export const injectedConnector = new InjectedConnector({
-  supportedChainIds: [
-    1, // Mainet
-    3, // Ropsten
-    4, // Rinkeby
-    5, // Goerli
-    42, // Kovan
-    97, // BNB Test
-  ],
-});
+import { injectedConnector } from '../../contexts/injectedConnector';
 
 const Account = () => {
   const [balance, setBalance] = React.useState('');
@@ -39,14 +26,11 @@ const Account = () => {
   };
 
   return (
-    <Paper elevation={3} style={{ padding: '1em' }}>
-      <Typography variant="h5">Account</Typography>
-      <div style={{ marginTop: '1em' }} />
-      ChainId: {chainId}
+    <div>
+      {account}
       <br />
-      Account: {account}
-      <br />
-      Balance: Ξ{balance}
+      <strong>Ξ</strong>
+      {balance} (Chain {chainId})
       {!active ? (
         <Box>
           <Button variant="contained" type="button" onClick={onClick}>
@@ -54,7 +38,7 @@ const Account = () => {
           </Button>
         </Box>
       ) : null}
-    </Paper>
+    </div>
   );
 };
 

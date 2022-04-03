@@ -1,36 +1,49 @@
-import Paper from '@mui/material/Paper';
+import { Alert } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
 import { useBettingContext } from '../../contexts/Betting';
+import { TEAM } from '../../contexts/team';
 
-enum TEAM {
-  'Yet to announce' = 0,
-  'Blue Team' = 1,
-  'Red Team' = 2,
-}
+const Claim = () => {
+  const { selectedTeam, winningTeam, win, claim } = useBettingContext();
 
-const Claim = ({ winningTeam, getWinningTeam, win, claim }) => {
-  const { selectedTeam } = useBettingContext();
+  if (
+    winningTeam !== 0 &&
+    selectedTeam !== 0 &&
+    winningTeam !== selectedTeam &&
+    !win
+  ) {
+    return (
+      <Alert severity="info" icon={false}>
+        Sorry you lost!
+      </Alert>
+    );
+  }
+
+  if (
+    winningTeam !== 0 &&
+    selectedTeam !== 0 &&
+    winningTeam === selectedTeam &&
+    win
+  ) {
+    return (
+      <div>
+        <Alert severity="success" icon={false}>
+          {TEAM[winningTeam]} wins! You win!
+        </Alert>
+        <Box display="flex" flexDirection="row">
+          <Button variant="contained" disabled={!win} onClick={claim}>
+            claim
+          </Button>
+        </Box>
+      </div>
+    );
+  }
+
   return (
-    <Paper elevation={3} style={{ padding: '1em' }}>
-      <Typography variant="h5">Claim card</Typography>
-      <div style={{ marginTop: '1em' }} />
-      Winning : {TEAM[winningTeam]}
-      <br />
-      Selected: {selectedTeam !== 0 ? TEAM[selectedTeam] : '-'}, therefore I{' '}
-      {win ? 'win!' : 'lose :('}
-      <br />
-      <Box display="flex" flexDirection="row">
-        <Button variant="contained" onClick={getWinningTeam}>
-          Who wins?
-        </Button>
-        <div style={{ minWidth: '0.5em' }} />
-        <Button variant="contained" disabled={!win} onClick={claim}>
-          claim
-        </Button>
-      </Box>
-    </Paper>
+    <Alert severity="info" icon={false}>
+      Checking your bet ...
+    </Alert>
   );
 };
 
