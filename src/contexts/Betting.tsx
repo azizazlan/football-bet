@@ -141,12 +141,10 @@ export const BettingContextProvider = ({ children }: Props) => {
     const playerSelectedTeam = ethers.BigNumber.from(player[1]).toNumber();
     const playerBetId = ethers.BigNumber.from(player[2]).toNumber();
     setSelectedTeam(playerSelectedTeam);
-    console.log(`Player selectedTeam ${playerSelectedTeam}`);
 
     const betId = ethers.BigNumber.from(await contract.betId()).toNumber();
     const lastWinningTeam = await contract.betIdWinningTeam(betId);
     setWinningTeam(lastWinningTeam.toNumber());
-    console.log(`lastWinningTeam ${lastWinningTeam}`);
 
     if (playerSelectedTeam === winningTeam) {
       setWin(true);

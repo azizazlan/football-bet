@@ -3,41 +3,43 @@ import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import CircularProgress from '@mui/material/CircularProgress';
-import Select from 'react-select';
-import {
-  Path,
-  useForm,
-  UseFormRegister,
-  SubmitHandler,
-  Controller,
-} from 'react-hook-form';
+import { useForm, SubmitHandler, Controller } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import { useBettingContext } from '../../contexts/Betting';
 import { TEAM } from '../../contexts/team';
+import BouncingRadio from './BouncingRadio';
 
 interface IFormInput {
   'Bet Amount': string;
   betAmountInEther: number;
-  selectedTeam: { label: string; value: number };
+  selectedTeam: number;
+  // selectedTeam: { label: string; value: number };
 }
 
-type InputProps = {
-  label: Path<IFormInput>;
-  register: UseFormRegister<IFormInput>;
-  required: boolean;
-};
+const schema = yup
+  .object({
+    betAmountInEther: yup.number().positive().required(),
+    selectedTeam: yup.number().positive().integer().required(),
+  })
+  .required();
 
 export default function BettingForm() {
-  const { control, handleSubmit } = useForm<IFormInput>({
-    defaultValues: {
-      selectedTeam: { value: 1, label: TEAM[1] },
-    },
+  const {
+    control,
+    handleSubmit,
+    register,
+    formState: { errors },
+  } = useForm<IFormInput>({
+    defaultValues: {},
+    resolver: yupResolver(schema),
   });
 
   const { enterBet, pending, hasPlayerBet, selectedTeam } = useBettingContext();
 
   const onSubmit: SubmitHandler<IFormInput> = (data) => {
     enterBet({
-      selectedTeam: data.selectedTeam.value,
+      selectedTeam: data.selectedTeam,
       betAmountInEther: data.betAmountInEther,
     });
   };
@@ -69,20 +71,13 @@ export default function BettingForm() {
             name="betAmountInEther"
             control={control}
           />
+          {errors.betAmountInEther ? (
+            <Alert severity="error" icon={false}>
+              Must enter value of at least 0.00015
+            </Alert>
+          ) : null}
           <br />
-          <Controller
-            control={control}
-            name="selectedTeam"
-            render={({ field }) => (
-              <Select
-                {...field}
-                options={[
-                  { value: 1, label: 'Blue Team' },
-                  { value: 2, label: 'Red Team' },
-                ]}
-              />
-            )}
-          />
+          <BouncingRadio register={register} errors={errors} />
           <Box my={1} display="flex" flexDirection="row" alignItems="center">
             <Button
               variant="contained"

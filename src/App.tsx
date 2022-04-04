@@ -10,15 +10,19 @@ import logo from './assets/imgs/moneycome.png';
 
 const Header = () => {
   return (
-    <Box display="flex" flexDirection="row" style={{ width: '100%' }}>
+    <Box
+      display="flex"
+      flexDirection="row"
+      style={{ width: '100%', marginBottom: '1em' }}
+    >
       <Box>
         <img
           src={logo}
           alt="moneycome logo"
-          style={{ width: '125px', height: 'auto' }}
+          style={{ width: '155px', height: 'auto' }}
         />
       </Box>
-      <Box mx={3} my={2} flexGrow={1}>
+      <Box mx={3} my={0} flexGrow={1}>
         <Account />
       </Box>
     </Box>

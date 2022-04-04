@@ -50,7 +50,7 @@ const Betting = () => {
       >
         <img src={animate} style={{ width: '150px', height: 'auto' }} />
         <Alert severity="info" icon={false}>
-          Randomly selecting wining team...
+          Randomly selecting wining ball...
         </Alert>
       </div>
     );
@@ -63,11 +63,13 @@ const Betting = () => {
   return (
     <div>
       {account === '0x830227c880d2281Ae91Cf8097628C889E4D92E8f' ? (
-        <Operator
-          pending={pending}
-          betState={betState}
-          startNewBet={startNewBet}
-        />
+        <div>
+          <Operator
+            pending={pending}
+            betState={betState}
+            startNewBet={startNewBet}
+          />
+        </div>
       ) : (
         <Alert severity="info" icon={false}>
           Betting session closed!

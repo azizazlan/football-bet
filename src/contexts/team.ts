@@ -1,5 +1,5 @@
 export enum TEAM {
   '...' = 0,
-  'Blue Team' = 1,
-  'Red Team' = 2,
+  'Blue ball' = 1,
+  'Red ball' = 2,
 }
