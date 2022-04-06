@@ -52,7 +52,7 @@ export default function BettingForm() {
       <Box display="flex" flexDirection="column" alignItems="center">
         <img src={goodluck} alt="Good luck" />
         <Alert severity="info" icon={false}>
-          You bet on {TEAM[player.teamSelected]}! Please wait for
+          You bet on {TEAM[player.teamSelected]}! Please wait for an
           announcement...
         </Alert>
         <CountdownTimer />

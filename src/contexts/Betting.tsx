@@ -14,6 +14,8 @@ type Player = {
   amountBet: number;
   teamSelected: number;
   betId: number;
+  hasClaimed: boolean;
+  amountClaimed: string;
 };
 
 export enum BetState {
@@ -58,6 +60,8 @@ export const BettingContextProvider = ({ children }: Props) => {
     amountBet: 0,
     teamSelected: -1,
     betId: -1,
+    hasClaimed: false,
+    amountClaimed: '0',
   });
 
   const { ethereum } = window;
@@ -139,6 +143,8 @@ export const BettingContextProvider = ({ children }: Props) => {
         amountBet: val.betAmountInEther,
         teamSelected: val.selectedTeam,
         betId: betId,
+        hasClaimed: false,
+        amountClaimed: '0',
       });
 
       console.log(receipt);
@@ -172,6 +178,14 @@ export const BettingContextProvider = ({ children }: Props) => {
     const tx = await contract.connect(signer).claim();
     const receipt = await tx.wait();
     console.log(receipt);
+
+    if (receipt.events[0].event === 'GainsClaimed') {
+      let amount = receipt.events[0].args[1]; // big number
+      amount = ethers.BigNumber.from(amount);
+      const amountInEther = ethers.utils.formatEther(amount);
+      setPlayer({ ...player, hasClaimed: true, amountClaimed: amountInEther });
+    }
+
     setDelayInterval(DELAY_INTERVAL);
   };
 

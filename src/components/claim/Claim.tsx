@@ -11,18 +11,12 @@ import nada from '../../assets/imgs/nobet.png';
 const Claim = () => {
   const { betSession, player, winningTeam, claim } = useBettingContext();
 
-  console.log(`betSession.betId ${betSession.betId}`);
-  console.log(`winningTeam ${winningTeam}`);
-
-  console.log(`player.betId ${player.betId}`);
-  console.log(`player.teamSelected ${player.teamSelected}`);
-
   if (betSession.betId !== player.betId) {
     return (
       <Box display="flex" flexDirection="column" alignItems="center">
         <img src={nada} alt="You have not place a bet" />
         <Alert severity="info" icon={false}>
-          You do not place a bet and betting session is closed.
+          Betting session closed.
         </Alert>
       </Box>
     );
@@ -37,7 +31,7 @@ const Claim = () => {
       <Box display="flex" flexDirection="column" alignItems="center">
         <img src={youlost} alt="You lost" />
         <Alert severity="info" icon={false}>
-          {TEAM[winningTeam]} wins! You bet {TEAM[player.teamSelected]}.
+          {TEAM[winningTeam]} wins! You bet on {TEAM[player.teamSelected]}.
         </Alert>
       </Box>
     );
@@ -46,7 +40,8 @@ const Claim = () => {
   if (
     winningTeam !== 0 &&
     winningTeam === player.teamSelected &&
-    betSession.betId === player.betId
+    betSession.betId === player.betId &&
+    !player.hasClaimed
   ) {
     return (
       <Box display="flex" flexDirection="column" alignItems="center">
@@ -57,6 +52,23 @@ const Claim = () => {
         <Button variant="contained" onClick={claim}>
           claim
         </Button>
+      </Box>
+    );
+  }
+
+  if (
+    winningTeam !== 0 &&
+    winningTeam === player.teamSelected &&
+    betSession.betId === player.betId &&
+    player.hasClaimed
+  ) {
+    return (
+      <Box display="flex" flexDirection="column" alignItems="center">
+        <img src={youwin} alt="You win" />
+        <Alert severity="success" icon={false}>
+          <strong>Ξ</strong>
+          {player.amountClaimed} has been transferrred to your wallet!
+        </Alert>
       </Box>
     );
   }
