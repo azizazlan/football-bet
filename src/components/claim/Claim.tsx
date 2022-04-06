@@ -3,47 +3,71 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import { useBettingContext } from '../../contexts/Betting';
 import { TEAM } from '../../contexts/team';
+import youlost from '../../assets/imgs/youlost.png';
+import youwin from '../../assets/imgs/youwin.png';
+import animate from '../../assets/imgs/giphy.gif';
+import nada from '../../assets/imgs/nobet.png';
 
 const Claim = () => {
-  const { selectedTeam, winningTeam, win, claim } = useBettingContext();
+  const { betSession, player, winningTeam, claim } = useBettingContext();
 
-  if (
-    winningTeam !== 0 &&
-    selectedTeam !== 0 &&
-    winningTeam !== selectedTeam &&
-    !win
-  ) {
+  console.log(`betSession.betId ${betSession.betId}`);
+  console.log(`winningTeam ${winningTeam}`);
+
+  console.log(`player.betId ${player.betId}`);
+  console.log(`player.teamSelected ${player.teamSelected}`);
+
+  if (betSession.betId !== player.betId) {
     return (
-      <Alert severity="info" icon={false}>
-        Sorry you lost!
-      </Alert>
+      <Box display="flex" flexDirection="column" alignItems="center">
+        <img src={nada} alt="You have not place a bet" />
+        <Alert severity="info" icon={false}>
+          You do not place a bet and betting session is closed.
+        </Alert>
+      </Box>
     );
   }
 
   if (
     winningTeam !== 0 &&
-    selectedTeam !== 0 &&
-    winningTeam === selectedTeam &&
-    win
+    winningTeam !== player.teamSelected &&
+    betSession.betId === player.betId
   ) {
     return (
-      <div>
-        <Alert severity="success" icon={false}>
-          {TEAM[winningTeam]} wins! You win!
+      <Box display="flex" flexDirection="column" alignItems="center">
+        <img src={youlost} alt="You lost" />
+        <Alert severity="info" icon={false}>
+          {TEAM[winningTeam]} wins! You bet {TEAM[player.teamSelected]}.
         </Alert>
-        <Box display="flex" flexDirection="row">
-          <Button variant="contained" disabled={!win} onClick={claim}>
-            claim
-          </Button>
-        </Box>
-      </div>
+      </Box>
+    );
+  }
+
+  if (
+    winningTeam !== 0 &&
+    winningTeam === player.teamSelected &&
+    betSession.betId === player.betId
+  ) {
+    return (
+      <Box display="flex" flexDirection="column" alignItems="center">
+        <img src={youwin} alt="You win" />
+        <Alert severity="success" icon={false}>
+          {TEAM[winningTeam]} wins!
+        </Alert>
+        <Button variant="contained" onClick={claim}>
+          claim
+        </Button>
+      </Box>
     );
   }
 
   return (
-    <Alert severity="info" icon={false}>
-      Checking your bet ...
-    </Alert>
+    <Box display="flex" flexDirection="column" alignItems="center">
+      <img src={animate} style={{ width: '150px', height: 'auto' }} />
+      <Alert severity="info" icon={false}>
+        Checking your bet...
+      </Alert>
+    </Box>
   );
 };
 

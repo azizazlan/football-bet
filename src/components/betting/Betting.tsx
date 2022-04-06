@@ -9,6 +9,7 @@ import Claim from '../claim/Claim';
 import useInterval from './useInterval';
 import { injectedConnector } from '../../contexts/injectedConnector';
 import animate from '../../assets/imgs/giphy.gif';
+import { BetState } from '../../contexts/Betting';
 
 const Betting = () => {
   const { account, activate } = useWeb3React<Web3Provider>();
@@ -16,24 +17,28 @@ const Betting = () => {
   const {
     delayInterval,
     pending,
-    getBetState,
-    betState,
+    betSession,
+    updateBetSession,
     startNewBet,
     getWinningTeam,
   } = useBettingContext();
 
   React.useEffect(() => {
-    getBetState();
     activate(injectedConnector);
-  }, [injectedConnector, betState]);
+  }, [injectedConnector, betSession]);
 
   useInterval(() => {
-    getBetState();
+    updateBetSession();
 
-    if (betState === 2 || betState === 3) {
+    if (
+      betSession.betState === BetState.PICKING_TEAM ||
+      betSession.betState === BetState.CLAIM
+    ) {
       getWinningTeam();
     }
   }, delayInterval);
+
+  const { betState } = betSession;
 
   if (betState === 0) {
     return <BettingForm />;
@@ -65,8 +70,8 @@ const Betting = () => {
       {account === '0x830227c880d2281Ae91Cf8097628C889E4D92E8f' ? (
         <div>
           <Operator
+            betSession={betSession}
             pending={pending}
-            betState={betState}
             startNewBet={startNewBet}
           />
         </div>

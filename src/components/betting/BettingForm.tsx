@@ -9,6 +9,8 @@ import * as yup from 'yup';
 import { useBettingContext } from '../../contexts/Betting';
 import { TEAM } from '../../contexts/team';
 import BouncingRadio from './BouncingRadio';
+import goodluck from '../../assets/imgs/goodluck.png';
+import CountdownTimer from './CountdownTimer';
 
 interface IFormInput {
   'Bet Amount': string;
@@ -35,7 +37,7 @@ export default function BettingForm() {
     resolver: yupResolver(schema),
   });
 
-  const { enterBet, pending, hasPlayerBet, selectedTeam } = useBettingContext();
+  const { enterBet, pending, player, betSession } = useBettingContext();
 
   const onSubmit: SubmitHandler<IFormInput> = (data) => {
     enterBet({
@@ -44,12 +46,17 @@ export default function BettingForm() {
     });
   };
 
-  if (hasPlayerBet) {
+  if (player.betId === betSession.betId) {
+    // player has placed a bet
     return (
-      <Alert severity="info" icon={false}>
-        You bet on {TEAM[selectedTeam]}! Please wait for upcoming announcement
-        and good luck!!!
-      </Alert>
+      <Box display="flex" flexDirection="column" alignItems="center">
+        <img src={goodluck} alt="Good luck" />
+        <Alert severity="info" icon={false}>
+          You bet on {TEAM[player.teamSelected]}! Please wait for
+          announcement...
+        </Alert>
+        <CountdownTimer />
+      </Box>
     );
   }
 
@@ -82,7 +89,7 @@ export default function BettingForm() {
             <Button
               variant="contained"
               type="submit"
-              disabled={pending || hasPlayerBet}
+              disabled={pending || player.betId === betSession.betId}
             >
               submit
             </Button>

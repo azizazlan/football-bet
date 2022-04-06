@@ -4,6 +4,8 @@ import Button from '@mui/material/Button';
 import { ethers } from 'ethers';
 import { Web3Provider } from '@ethersproject/providers';
 import { useWeb3React } from '@web3-react/core';
+import MetaMaskOnboarding from '@metamask/onboarding';
+import { OnboardingButton } from './OnboardingButton';
 import { injectedConnector } from '../../contexts/injectedConnector';
 
 const Account = () => {
@@ -22,8 +24,27 @@ const Account = () => {
   }, [library, account]);
 
   const onClick = () => {
+    window.location.reload();
     activate(injectedConnector);
   };
+
+  if (!MetaMaskOnboarding.isMetaMaskInstalled()) {
+    return (
+      <Box my={3}>
+        <OnboardingButton />
+      </Box>
+    );
+  }
+
+  if (!active) {
+    return (
+      <Box my={3}>
+        <Button variant="contained" type="button" onClick={onClick}>
+          Connect to Metamask
+        </Button>
+      </Box>
+    );
+  }
 
   return (
     <div>
@@ -31,13 +52,6 @@ const Account = () => {
       <br />
       <strong>Ξ</strong>
       {balance} (Chain {chainId})
-      {!active ? (
-        <Box>
-          <Button variant="contained" type="button" onClick={onClick}>
-            Connect
-          </Button>
-        </Box>
-      ) : null}
     </div>
   );
 };

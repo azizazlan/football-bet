@@ -2,7 +2,6 @@ import Box from '@mui/material/Box';
 import { Web3Provider } from '@ethersproject/providers';
 import { Web3ReactProvider } from '@web3-react/core';
 import MetaMaskOnboarding from '@metamask/onboarding';
-import { OnboardingButton } from './components/metamask';
 import Betting from './components/betting/Betting';
 import Account from './components/metamask/Account';
 import { BettingContextProvider } from './contexts/Betting';
@@ -38,22 +37,20 @@ function getLibrary(provider: any): Web3Provider {
 function App() {
   if (!MetaMaskOnboarding.isMetaMaskInstalled()) {
     return (
-      <Box mx={3} my={3}>
+      <Box mx={1} my={1}>
         <Header />
-        <OnboardingButton />
       </Box>
     );
   }
-
   return (
-    <Box mx={3} my={3}>
-      <Web3ReactProvider getLibrary={getLibrary}>
+    <Web3ReactProvider getLibrary={getLibrary}>
+      <Box mx={1} my={1}>
         <Header />
         <BettingContextProvider>
           <Betting />
         </BettingContextProvider>
-      </Web3ReactProvider>
-    </Box>
+      </Box>
+    </Web3ReactProvider>
   );
 }
 
