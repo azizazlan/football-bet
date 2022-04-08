@@ -13,14 +13,12 @@ const Operator = ({ pending, betSession, startNewBet }) => {
           disabled={
             pending ||
             betSession.betState === BetState.OPEN ||
-            betSession.betState === BetState.PICKING_TEAM ||
+            betSession.betState === BetState.RANDOM ||
             betSession.betState === BetState.CLAIM
           }
         >
-          start new bet
+          new bet session {pending ? <CircularProgress size={27} /> : null}
         </Button>
-        <div style={{ minWidth: '0.5em' }} />
-        {pending ? <CircularProgress size={27} /> : null}
       </Box>
     </Box>
   );

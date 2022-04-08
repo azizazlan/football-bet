@@ -1,5 +1,4 @@
 import React from 'react';
-import Alert from '@mui/material/Alert';
 import { Web3Provider } from '@ethersproject/providers';
 import { useWeb3React } from '@web3-react/core';
 import { useBettingContext } from '../../contexts/Betting';
@@ -8,19 +7,19 @@ import Operator from '../operator/Operator';
 import Claim from '../claim/Claim';
 import useInterval from './useInterval';
 import { injectedConnector } from '../../contexts/injectedConnector';
-import animate from '../../assets/imgs/giphy.gif';
 import { BetState } from '../../contexts/Betting';
 
 const Betting = () => {
   const { account, activate } = useWeb3React<Web3Provider>();
 
   const {
+    player,
     delayInterval,
     pending,
     betSession,
     updateBetSession,
     startNewBet,
-    getWinningTeam,
+    updateWinningTeam,
   } = useBettingContext();
 
   React.useEffect(() => {
@@ -28,41 +27,40 @@ const Betting = () => {
   }, [injectedConnector, betSession]);
 
   useInterval(() => {
-    updateBetSession();
-
-    if (
-      betSession.betState === BetState.PICKING_TEAM ||
-      betSession.betState === BetState.CLAIM
-    ) {
-      getWinningTeam();
+    if (betSession.betState === BetState.CLAIM) {
+      updateWinningTeam();
     }
+    updateBetSession();
   }, delayInterval);
 
-  const { betState } = betSession;
-
-  if (betState === 0) {
-    return <BettingForm />;
+  if (betSession.betState === 2) {
+    return <div>Randomly selecting wining ball...</div>;
   }
 
-  if (betState === 2) {
-    return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <img src={animate} style={{ width: '150px', height: 'auto' }} />
-        <Alert severity="info" icon={false}>
-          Randomly selecting wining ball...
-        </Alert>
-      </div>
-    );
-  }
-
-  if (betState === 3) {
+  if (
+    betSession.betState === 3 &&
+    betSession.betId === player.betId &&
+    betSession.winningTeam > 0 &&
+    betSession.winningTeam === player.teamSelected
+  ) {
     return <Claim />;
+  }
+
+  if (
+    betSession.betState === 3 &&
+    betSession.betId === player.betId &&
+    betSession.winningTeam > 0 &&
+    betSession.winningTeam !== player.teamSelected
+  ) {
+    return <div>Sorry, you lost!</div>;
+  }
+
+  if (betSession.betState === 3 && betSession.winningTeam === -1) {
+    return <div>Checking claim...</div>;
+  }
+
+  if (betSession.betState === 0) {
+    return <BettingForm />;
   }
 
   return (
@@ -76,9 +74,7 @@ const Betting = () => {
           />
         </div>
       ) : (
-        <Alert severity="info" icon={false}>
-          Betting session closed!
-        </Alert>
+        <div>Betting session closed!</div>
       )}
     </div>
   );

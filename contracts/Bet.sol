@@ -21,7 +21,7 @@ contract Bet is KeeperCompatibleInterface {
     enum BET_STATE {
         OPEN,
         CLOSED,
-        PICKING_TEAM,
+        RANDOM,
         CLAIM
     }
     BET_STATE public betState;
@@ -133,7 +133,7 @@ contract Bet is KeeperCompatibleInterface {
     }
 
     function pickWinningTeam() private {
-        require(betState == BET_STATE.PICKING_TEAM, "Incorrect bet state");
+        require(betState == BET_STATE.RANDOM, "Incorrect bet state");
 
         uint256 requestId = RandomTeamSelectorInterface(
             govInterface.randomTeamSelector()
@@ -143,7 +143,7 @@ contract Bet is KeeperCompatibleInterface {
     }
 
     function setWinningTeam(uint256 requestId, uint256 winningTeam) external {
-        require(betState == BET_STATE.PICKING_TEAM, "Incorrect bet state");
+        require(betState == BET_STATE.RANDOM, "Incorrect bet state");
 
         uint256 bId = requestIdBetId[requestId]; // get bet id
         betIdWinningTeam[bId] = winningTeam;
@@ -180,7 +180,7 @@ contract Bet is KeeperCompatibleInterface {
             lastTimeStamp = block.timestamp;
         }
         if (lastTimeStamp > expiredTimeStamp && betState == BET_STATE.OPEN) {
-            betState = BET_STATE.PICKING_TEAM;
+            betState = BET_STATE.RANDOM;
             pickWinningTeam();
         }
         if (

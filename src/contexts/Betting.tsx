@@ -21,13 +21,14 @@ type Player = {
 export enum BetState {
   OPEN = 0,
   CLOSED = 1,
-  PICKING_TEAM = 2,
+  RANDOM = 2,
   CLAIM = 3,
 }
 
 type BetSession = {
   betId: number;
   betState: BetState;
+  winningTeam: number;
 };
 
 type BetInputType = { selectedTeam: number; betAmountInEther: number };
@@ -39,8 +40,7 @@ type Context = {
   updateBetSession: () => void;
   startNewBet: () => void;
   enterBet: (val: BetInputType) => void;
-  winningTeam: number;
-  getWinningTeam: () => void;
+  updateWinningTeam: () => void;
   claim: () => void;
   player: Player;
 };
@@ -53,8 +53,8 @@ export const BettingContextProvider = ({ children }: Props) => {
   const [betSession, setBetSession] = useState<BetSession>({
     betId: -1,
     betState: BetState.CLOSED,
+    winningTeam: -1,
   });
-  const [winningTeam, setWinningTeam] = useState(0);
   const [delayInterval, setDelayInterval] = useState(DELAY_INTERVAL);
   const [player, setPlayer] = useState<Player>({
     amountBet: 0,
@@ -64,16 +64,13 @@ export const BettingContextProvider = ({ children }: Props) => {
     amountClaimed: '0',
   });
 
-  const { ethereum } = window;
   const { account, library } = useWeb3React<Web3Provider>();
 
   useEffect(() => {
     const contractAddress = `${process.env.BET_CONTRACT_ADDR}`;
-    const provider = new ethers.providers.Web3Provider(ethereum);
-
-    const contract = new ethers.Contract(contractAddress, Bet.abi, provider);
+    const contract = new ethers.Contract(contractAddress, Bet.abi, library);
     setContract(contract);
-  }, []);
+  }, [library]);
 
   const updateBetSession = async () => {
     if (!contract) {
@@ -81,8 +78,10 @@ export const BettingContextProvider = ({ children }: Props) => {
       return;
     }
     const betId = ethers.BigNumber.from(await contract.betId()).toNumber();
-    const bs = await contract.betState();
-    setBetSession({ betId: betId, betState: bs });
+    const betState = ethers.BigNumber.from(
+      await contract.betState(),
+    ).toNumber();
+    setBetSession({ ...betSession, betId: betId, betState: betState });
   };
 
   const startNewBet = async () => {
@@ -105,8 +104,9 @@ export const BettingContextProvider = ({ children }: Props) => {
       setPending(false);
       setDelayInterval(DELAY_INTERVAL);
 
-      const bs = await contract.betState();
-      setBetSession({ ...betSession, betState: bs });
+      const betId = ethers.BigNumber.from(await contract.betId()).toNumber();
+      const betState = await contract.betState();
+      setBetSession({ betId: betId, betState: betState, winningTeam: -1 });
     } catch (err) {
       setPending(false);
       setDelayInterval(DELAY_INTERVAL);
@@ -157,13 +157,19 @@ export const BettingContextProvider = ({ children }: Props) => {
     }
   };
 
-  const getWinningTeam = async () => {
+  const updateWinningTeam = async () => {
     if (!account) return;
     if (!contract) return;
 
     const betId = ethers.BigNumber.from(await contract.betId()).toNumber();
-    const lastWinningTeam = await contract.betIdWinningTeam(betId);
-    setWinningTeam(lastWinningTeam.toNumber());
+    const winningTeam = ethers.BigNumber.from(
+      await contract.betIdWinningTeam(betId),
+    ).toNumber();
+    if (betSession.betId === betId) {
+      setBetSession({ ...betSession, winningTeam: winningTeam });
+    } else {
+      console.log(`updateWinningTeam betId does not match!`);
+    }
   };
 
   const claim = async () => {
@@ -185,7 +191,6 @@ export const BettingContextProvider = ({ children }: Props) => {
       const amountInEther = ethers.utils.formatEther(amount);
       setPlayer({ ...player, hasClaimed: true, amountClaimed: amountInEther });
     }
-
     setDelayInterval(DELAY_INTERVAL);
   };
 
@@ -198,8 +203,7 @@ export const BettingContextProvider = ({ children }: Props) => {
         updateBetSession,
         startNewBet,
         enterBet,
-        winningTeam,
-        getWinningTeam,
+        updateWinningTeam,
         claim,
         player,
       }}

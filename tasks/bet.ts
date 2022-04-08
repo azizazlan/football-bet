@@ -8,7 +8,7 @@ task('bet', 'Bet')
     enum BET_STATE {
       OPEN,
       CLOSED,
-      PICKING_TEAM,
+      RANDOM,
       CLAIM,
     }
 

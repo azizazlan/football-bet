@@ -1,19 +1,31 @@
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormLabel from '@mui/material/FormLabel';
 import Alert from '@mui/material/Alert';
 
-const BouncingRadio = ({ register, errors }) => {
+const BouncingRadio = ({ pending, register, errors }) => {
   return (
     <div>
-      <div>
-        <input
-          id="team_blue"
-          type="radio"
+      <FormLabel id="selectedTeam">Pick your bet</FormLabel>
+      <RadioGroup
+        aria-labelledby="demo-radio-buttons-group-label"
+        defaultValue="female"
+        name="radio-buttons-group"
+      >
+        <FormControlLabel
+          disabled={pending}
           value={1}
-          {...register('selectedTeam')}
+          control={<Radio {...register('selectedTeam')} />}
+          label="Blue ball"
         />
-        <label htmlFor="team_blue">Blue ball</label>
-        <input type="radio" value={2} {...register('selectedTeam')} />
-        <label htmlFor="team_red">Red ball</label>
-      </div>
+        <FormControlLabel
+          disabled={pending}
+          value={2}
+          control={<Radio {...register('selectedTeam')} />}
+          label="Red ball"
+        />
+      </RadioGroup>
       {errors.selectedTeam ? (
         <Alert severity="error" icon={false}>
           Select a ball!

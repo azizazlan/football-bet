@@ -6,7 +6,7 @@ task('start', 'Initialise new bet session')
     enum BET_STATE {
       OPEN,
       CLOSED,
-      PICKING_TEAM,
+      RANDOM,
       CLAIM,
     }
 
@@ -18,7 +18,6 @@ task('start', 'Initialise new bet session')
     const tx = await bet.startNewBet(duration);
     const receipt = await tx.wait();
     console.log(receipt);
-
     console.log(BET_STATE[await bet.betState()]);
   });
 

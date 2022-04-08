@@ -4,7 +4,7 @@ task('state', 'Get the bet state').setAction(async (taskArgs, hre) => {
   enum BET_STATE {
     OPEN,
     CLOSED,
-    PICKING_TEAM,
+    RANDOM,
     CLAIM,
   }
 
