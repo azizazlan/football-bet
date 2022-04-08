@@ -51,9 +51,9 @@ export default function BettingForm() {
   ) {
     // player has placed a bet
     return (
-      <Box display="flex" flexDirection="row">
+      <Box display="flex" flexDirection="column">
         <div>
-          You bet on {TEAM[player.teamSelected]}! Please wait for result,
+          You bet on {TEAM[player.teamSelected]}! Please wait for result.
         </div>
         <CountdownTimer />
       </Box>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Typography } from '@mui/material';
 import useInterval from './useInterval';
 
 const CountdownTimer = () => {
@@ -8,7 +9,7 @@ const CountdownTimer = () => {
     setSeconds(secs);
   }, 1000);
 
-  return <div>{seconds} seconds</div>;
+  return <Typography variant="caption">{seconds} seconds</Typography>;
 };
 
 export default CountdownTimer;

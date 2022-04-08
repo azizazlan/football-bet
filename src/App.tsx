@@ -5,7 +5,7 @@ import MetaMaskOnboarding from '@metamask/onboarding';
 import Betting from './components/betting/Betting';
 import Account from './components/metamask/Account';
 import { BettingContextProvider } from './contexts/Betting';
-import logo from './assets/imgs/moneycome.png';
+import logo from './assets/imgs/logo.png';
 
 const Header = () => {
   return (

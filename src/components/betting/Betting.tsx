@@ -34,7 +34,7 @@ const Betting = () => {
   }, delayInterval);
 
   if (betSession.betState === 2) {
-    return <div>Randomly selecting wining ball...</div>;
+    return <div>Getting random result...</div>;
   }
 
   if (
@@ -52,7 +52,7 @@ const Betting = () => {
     betSession.winningTeam > 0 &&
     betSession.winningTeam !== player.teamSelected
   ) {
-    return <div>Sorry, you lost!</div>;
+    return <div>Sorry, you lost :(</div>;
   }
 
   if (betSession.betState === 3 && betSession.winningTeam === -1) {
@@ -74,7 +74,7 @@ const Betting = () => {
           />
         </div>
       ) : (
-        <div>Betting session closed!</div>
+        <div>Betting session closed.</div>
       )}
     </div>
   );

@@ -10,25 +10,24 @@ const BouncingRadio = ({ pending, register, errors }) => {
       <FormLabel id="selectedTeam">Pick your bet</FormLabel>
       <RadioGroup
         aria-labelledby="demo-radio-buttons-group-label"
-        defaultValue="female"
         name="radio-buttons-group"
       >
         <FormControlLabel
           disabled={pending}
           value={1}
           control={<Radio {...register('selectedTeam')} />}
-          label="Blue ball"
+          label="Blue team"
         />
         <FormControlLabel
           disabled={pending}
           value={2}
           control={<Radio {...register('selectedTeam')} />}
-          label="Red ball"
+          label="Red team"
         />
       </RadioGroup>
       {errors.selectedTeam ? (
         <Alert severity="error" icon={false}>
-          Select a ball!
+          Select a team!
         </Alert>
       ) : null}
     </div>
